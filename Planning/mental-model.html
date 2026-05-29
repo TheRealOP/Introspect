@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introspect — Mental Model</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .meta {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 40px;
+    }
+
+    /* ── SECTION LABELS ── */
+    .layer-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+
+    /* ── ROWS ── */
+    .row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: #1e2330;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 14px 18px;
+      min-width: 180px;
+      flex: 0 0 auto;
+    }
+
+    .card.accent-blue  { border-left: 3px solid #3b82f6; }
+    .card.accent-green { border-left: 3px solid #22c55e; }
+    .card.accent-purple{ border-left: 3px solid #a855f7; }
+    .card.accent-amber { border-left: 3px solid #f59e0b; }
+    .card.accent-red   { border-left: 3px solid #ef4444; }
+    .card.accent-teal  { border-left: 3px solid #14b8a6; }
+    .card.accent-pink  { border-left: 3px solid #ec4899; }
+    .card.accent-sky   { border-left: 3px solid #0ea5e9; }
+    .card.accent-gray  { border-left: 3px solid #6b7280; }
+
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 6px;
+    }
+
+    .card-sub {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      line-height: 1.55;
+    }
+
+    .card-sub code {
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      font-size: 0.68rem;
+      background: #0f1117;
+      border-radius: 3px;
+      padding: 1px 4px;
+      color: #7dd3fc;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-right: 4px;
+      margin-top: 4px;
+    }
+
+    .tag-stub   { background: #1e3a5f; color: #7dd3fc; }
+    .tag-done   { background: #14532d; color: #86efac; }
+    .tag-future { background: #2d1f3d; color: #d8b4fe; }
+    .tag-schema { background: #2c1a00; color: #fbbf24; }
+
+    /* ── ARROWS ── */
+    .arrow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      color: #334155;
+      font-size: 1rem;
+      padding: 0 6px;
+      user-select: none;
+    }
+
+    .arrow-label {
+      font-size: 0.62rem;
+      color: #475569;
+      padding: 0 4px;
+    }
+
+    /* ── TABLE ── */
+    .schema-table {
+      border-collapse: collapse;
+      font-size: 0.72rem;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .schema-table th {
+      text-align: left;
+      color: #64748b;
+      font-weight: 600;
+      padding: 4px 10px 4px 0;
+      border-bottom: 1px solid #2d3748;
+    }
+
+    .schema-table td {
+      padding: 4px 10px 4px 0;
+      color: #94a3b8;
+      vertical-align: top;
+      border-bottom: 1px solid #1e2330;
+    }
+
+    .schema-table td code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.66rem;
+      color: #7dd3fc;
+      background: #0f1117;
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+
+    .pk  { color: #f59e0b !important; font-weight: 700; }
+    .fk  { color: #a78bfa !important; }
+    .nn  { color: #6b7280; font-style: italic; font-size: 0.6rem; }
+
+    /* ── DIVIDER ── */
+    hr {
+      border: none;
+      border-top: 1px solid #1e2330;
+      margin: 32px 0;
+    }
+
+    /* ── ENV TABLE ── */
+    .env-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .env-key {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.7rem;
+      color: #fbbf24;
+      min-width: 240px;
+    }
+
+    .env-val {
+      font-size: 0.7rem;
+      color: #64748b;
+    }
+
+    /* ── PHASE LEGEND ── */
+    .phase-list {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .phase-chip {
+      font-size: 0.7rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .phase-chip.done   { background: #14532d; color: #86efac; }
+    .phase-chip.next   { background: #1e3a5f; color: #7dd3fc; }
+    .phase-chip.future { background: #2d1f3d; color: #d8b4fe; }
+  </style>
+</head>
+<body>
+
+  <h1>Introspect — Mental Model</h1>
+  <p class="meta">Last updated: Phase 1 — Scaffolding complete &nbsp;·&nbsp; Next.js 15 / tRPC 11 / Drizzle / SQLite / Vercel AI SDK</p>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PHASE PROGRESS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Phase Progress</div>
+    <div class="phase-list">
+      <span class="phase-chip done">✓ Phase 1 · Scaffolding</span>
+      <span class="phase-chip next">→ Phase 2 · Journal Entry + AI</span>
+      <span class="phase-chip future">Phase 3 · Habits extraction</span>
+      <span class="phase-chip future">Phase 4 · Nudges</span>
+      <span class="phase-chip future">Phase 5 · Dashboard</span>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       REQUEST FLOW
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Request Flow</div>
+
+    <!-- Browser layer -->
+    <div class="row">
+      <div class="card accent-blue">
+        <div class="card-title">Browser / Client</div>
+        <div class="card-sub">
+          React 19, Tailwind CSS v4<br/>
+          <code>src/app/page.tsx</code> — splash page<br/>
+          <span class="tag tag-stub">stub</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row">
+      <div class="arrow">↓</div>
+      <div class="arrow-label">tRPC React Query hook · <code>src/trpc/react.tsx</code></div>
+    </div>
+
+    <!-- tRPC HTTP layer -->
+    <div class="row">
+      <div class="card accent-sky">
+        <div class="card-title">tRPC HTTP Handler</div>
+        <div class="card-sub">
+          <code>src/app/api/trpc/[trpc]/route.ts</code><br/>
+          Next.js Route Handler (App Router)<br/>
+          Transformer: <code>superjson</code>
+        </div>
+      </div>
+      <div class="card accent-gray">
+        <div class="card-title">Server-side Caller</div>
+        <div class="card-sub">
+          <code>src/trpc/server.ts</code><br/>
+          Used in Server Components &amp;<br/>
+          RSC pages to call tRPC directly
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row">
+      <div class="arrow">↓</div>
+      <div class="arrow-label">dispatched to appRouter</div>
+    </div>
+
+    <!-- tRPC Router layer -->
+    <div class="row">
+      <div class="card accent-purple">
+        <div class="card-title">appRouter</div>
+        <div class="card-sub">
+          <code>src/server/api/root.ts</code><br/>
+          Registers all sub-routers
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-row">
+      <div class="arrow">↓</div>
+      <div class="arrow-label">routes to sub-router</div>
+    </div>
+
+    <!-- Sub-routers -->
+    <div class="row">
+      <div class="card accent-purple">
+        <div class="card-title">post router <span class="tag tag-stub">stub</span></div>
+        <div class="card-sub">
+          <code>src/server/api/routers/post.ts</code><br/>
+          <b>hello</b>(text) → greeting string<br/>
+          <br/>
+          Placeholder until real routers land.<br/>
+          Add new routers here as phases progress.
+        </div>
+      </div>
+      <div class="card accent-purple">
+        <div class="card-title">entries router <span class="tag tag-future">future</span></div>
+        <div class="card-sub">
+          Phase 2 — CRUD for journal entries<br/>
+          + trigger AI analysis on create
+        </div>
+      </div>
+      <div class="card accent-purple">
+        <div class="card-title">habits router <span class="tag tag-future">future</span></div>
+        <div class="card-sub">Phase 3 — read/update extracted habits</div>
+      </div>
+      <div class="card accent-purple">
+        <div class="card-title">nudges router <span class="tag tag-future">future</span></div>
+        <div class="card-sub">Phase 4 — generate &amp; retrieve nudges</div>
+      </div>
+    </div>
+
+    <div class="arrow-row">
+      <div class="arrow">↓</div>
+      <div class="arrow-label">procedure executes with ctx.db</div>
+    </div>
+
+    <!-- tRPC context -->
+    <div class="row">
+      <div class="card accent-teal">
+        <div class="card-title">tRPC Context</div>
+        <div class="card-sub">
+          <code>src/server/api/trpc.ts</code><br/>
+          <code>createTRPCContext</code> injects <code>db</code><br/>
+          <code>timingMiddleware</code> — logs latency<br/>
+          dev: random 100–500 ms artificial delay
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       DATABASE LAYER
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Database Layer</div>
+
+    <div class="row">
+      <div class="card accent-amber">
+        <div class="card-title">Drizzle ORM client</div>
+        <div class="card-sub">
+          <code>src/server/db/index.ts</code><br/>
+          Driver: <code>@libsql/client</code> (better-sqlite3-compatible)<br/>
+          URL from <code>env.DATABASE_URL</code><br/>
+          Connection cached in <code>globalThis</code> for HMR
+        </div>
+      </div>
+      <div class="card accent-amber">
+        <div class="card-title">drizzle.config.ts</div>
+        <div class="card-sub">
+          dialect: sqlite<br/>
+          tablesFilter: <code>introspect_*</code><br/>
+          schema: <code>src/server/db/schema.ts</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schema tables -->
+    <div class="layer-label" style="margin-top: 20px;">Schema — <code>src/server/db/schema.ts</code> &nbsp;<span class="tag tag-done">pushed</span></div>
+
+    <div class="row">
+      <div class="card accent-green" style="min-width: 340px;">
+        <div class="card-title">entries <code>introspect_entries</code></div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
+          <tr><td><code>content</code></td><td>TEXT</td><td>NOT NULL · free-form journal text</td></tr>
+          <tr><td><code>createdAt</code></td><td>INTEGER</td><td>unix timestamp · default now</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-green" style="min-width: 380px;">
+        <div class="card-title">habits <code>introspect_habits</code></div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
+          <tr><td><code>name</code></td><td>TEXT</td><td>NOT NULL · e.g. "Morning run"</td></tr>
+          <tr><td><code>sentiment</code></td><td>TEXT</td><td>NOT NULL · positive / negative / neutral</td></tr>
+          <tr><td><code>occurrences</code></td><td>INTEGER</td><td>default 1</td></tr>
+          <tr><td><code>lastSeen</code></td><td>INTEGER</td><td>unix timestamp</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-green" style="min-width: 340px;">
+        <div class="card-title">nudges <code>introspect_nudges</code></div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
+          <tr><td class="fk"><code>entryId</code></td><td>TEXT</td><td>FK → entries.id</td></tr>
+          <tr><td><code>action</code></td><td>TEXT</td><td>NOT NULL · 2-min actionable nudge</td></tr>
+          <tr><td><code>createdAt</code></td><td>INTEGER</td><td>unix timestamp · default now</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       AI LAYER
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">AI Layer</div>
+
+    <div class="row">
+      <div class="card accent-pink">
+        <div class="card-title">Vercel AI SDK <span class="tag tag-done">installed</span></div>
+        <div class="card-sub">
+          <code>ai</code> v6 · <code>@ai-sdk/google</code><br/>
+          Provider: Gemini (Google AI Studio)<br/>
+          Key: <code>GOOGLE_GENERATIVE_AI_API_KEY</code>
+        </div>
+      </div>
+      <div class="card accent-pink">
+        <div class="card-title">AI usage <span class="tag tag-future">future phases</span></div>
+        <div class="card-sub">
+          Phase 2: extract habits from entry text<br/>
+          Phase 4: generate nudge from habits<br/>
+          Called server-side inside tRPC mutations
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       ENV & CONFIG
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Env &amp; Config — <code>src/env.js</code> (t3-env validated)</div>
+    <div class="env-row"><span class="env-key">DATABASE_URL</span><span class="env-val">file:./db.sqlite (libsql local file)</span></div>
+    <div class="env-row"><span class="env-key">GOOGLE_GENERATIVE_AI_API_KEY</span><span class="env-val">Gemini key from aistudio.google.com</span></div>
+    <div class="env-row"><span class="env-key">NODE_ENV</span><span class="env-val">development / test / production</span></div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       FILE MAP
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">File Map</div>
+    <div class="row">
+      <div class="card accent-sky" style="min-width: 500px;">
+        <div class="card-sub" style="line-height: 2;">
+          <code>src/app/page.tsx</code> &nbsp;—&nbsp; home page (splash) <span class="tag tag-stub">stub</span><br/>
+          <code>src/app/layout.tsx</code> &nbsp;—&nbsp; root layout (fonts, globals)<br/>
+          <code>src/app/api/trpc/[trpc]/route.ts</code> &nbsp;—&nbsp; tRPC HTTP endpoint<br/>
+          <code>src/server/api/trpc.ts</code> &nbsp;—&nbsp; context + middleware + procedure factories<br/>
+          <code>src/server/api/root.ts</code> &nbsp;—&nbsp; appRouter assembly<br/>
+          <code>src/server/api/routers/post.ts</code> &nbsp;—&nbsp; placeholder router <span class="tag tag-stub">stub</span><br/>
+          <code>src/server/db/index.ts</code> &nbsp;—&nbsp; Drizzle client + libsql connection<br/>
+          <code>src/server/db/schema.ts</code> &nbsp;—&nbsp; 3 tables: entries, habits, nudges <span class="tag tag-done">done</span><br/>
+          <code>src/trpc/react.tsx</code> &nbsp;—&nbsp; client-side tRPC + React Query provider<br/>
+          <code>src/trpc/server.ts</code> &nbsp;—&nbsp; server-side tRPC caller<br/>
+          <code>src/trpc/query-client.ts</code> &nbsp;—&nbsp; React Query config (stale time 30s)<br/>
+          <code>src/env.js</code> &nbsp;—&nbsp; t3-env schema for all env vars<br/>
+          <code>drizzle.config.ts</code> &nbsp;—&nbsp; Drizzle Kit config (tablesFilter: introspect_*)<br/>
+          <code>.env</code> &nbsp;—&nbsp; local secrets (gitignored)<br/>
+          <code>db.sqlite</code> &nbsp;—&nbsp; local SQLite file <span class="tag tag-done">created</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

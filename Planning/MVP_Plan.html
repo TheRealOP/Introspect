@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introspect — MVP Plan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0e0e12;
+      --surface: #17171d;
+      --card: #1e1e26;
+      --border: #2a2a35;
+      --text: #e4e4e8;
+      --muted: #8b8b9e;
+      --accent: #7c6aff;
+      --accent2: #44d9e6;
+      --green: #34d399;
+      --orange: #f59e0b;
+      --pink: #ec4899;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h2 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* ─── Diagram (SVG) ─── */
+    .diagram-wrap {
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+    svg text {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* ─── Stack cards ─── */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .stack-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .stack-card:hover { border-color: var(--accent); }
+    .stack-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .stack-card p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .stack-card .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+    .badge.frontend   { background: #7c6aff30; color: var(--accent); }
+    .badge.backend     { background: #34d39930; color: var(--green); }
+    .badge.ai          { background: #ec489930; color: var(--pink); }
+    .badge.infra       { background: #f59e0b30; color: var(--orange); }
+
+    /* ─── Lists ─── */
+    ul { padding-left: 1.25rem; }
+    li { margin-bottom: 0.4rem; font-size: 0.92rem; }
+    li strong { color: var(--accent2); }
+
+    /* ─── Flow steps ─── */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: stretch;
+    }
+    .flow-step {
+      flex: 1 1 160px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      position: relative;
+    }
+    .flow-step .step-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+    .flow-step h4 { font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .flow-step p  { font-size: 0.8rem; color: var(--muted); }
+
+    .arrow-right {
+      align-self: center;
+      color: var(--accent);
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    /* ─── Data model table ─── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 0.75rem;
+    }
+    th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      background: var(--card);
+      border-bottom: 2px solid var(--border);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    td {
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:last-child td { border-bottom: none; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: var(--card);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+
+    .callout {
+      background: #7c6aff15;
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .callout strong { color: var(--text); }
+
+    @media (max-width: 600px) {
+      body { padding: 1rem; }
+      h1 { font-size: 1.6rem; }
+      section { padding: 1.25rem; }
+      .flow { flex-direction: column; }
+      .arrow-right { transform: rotate(90deg); text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════ -->
+<h1>Introspect — MVP Plan</h1>
+<p class="subtitle">A journaling app that learns your habits and nudges you toward intentional action.</p>
+
+<!-- ═══════════════════════════════════════════
+     1. CORE USER FLOW
+     ═══════════════════════════════════════════ -->
+<section>
+  <h2><span class="num">1</span> Core User Flow</h2>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="step-num">Step 1</div>
+      <h4>📝 Write an Entry</h4>
+      <p>Open the app every few hours. Free-write what you did, what you're thinking, and your plan.</p>
+    </div>
+    <span class="arrow-right">→</span>
+    <div class="flow-step">
+      <div class="step-num">Step 2</div>
+      <h4>🤖 AI Analyzes</h4>
+      <p>Gemini reads your entries via Vercel AI SDK, detects recurring habits, time patterns, and sentiment.</p>
+    </div>
+    <span class="arrow-right">→</span>
+    <div class="flow-step">
+      <div class="step-num">Step 3</div>
+      <h4>📊 See Insights</h4>
+      <p>Dashboard shows detected habits, streaks, and how your time is being spent.</p>
+    </div>
+    <span class="arrow-right">→</span>
+    <div class="flow-step">
+      <div class="step-num">Step 4</div>
+      <h4>⚡ 2-Min Action</h4>
+      <p>Get one concrete thing you can do right now to stay aligned with your goals.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     2. ARCHITECTURE DIAGRAM
+     ═══════════════════════════════════════════ -->
+<section>
+  <h2><span class="num">2</span> How It All Fits Together</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 420" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <!-- Boxes -->
+      <!-- Frontend -->
+      <rect x="30" y="30" width="200" height="100" rx="14" fill="#1e1e26" stroke="#7c6aff" stroke-width="2"/>
+      <text x="130" y="65" text-anchor="middle" fill="#7c6aff" font-size="11" font-weight="700">FRONTEND</text>
+      <text x="130" y="88" text-anchor="middle" fill="#e4e4e8" font-size="13" font-weight="600">T3 Stack (Next.js)</text>
+      <text x="130" y="110" text-anchor="middle" fill="#8b8b9e" font-size="11">Journal UI · Dashboard</text>
+
+      <!-- API -->
+      <rect x="350" y="30" width="200" height="100" rx="14" fill="#1e1e26" stroke="#34d399" stroke-width="2"/>
+      <text x="450" y="65" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700">API LAYER</text>
+      <text x="450" y="88" text-anchor="middle" fill="#e4e4e8" font-size="13" font-weight="600">Next.js API Routes</text>
+      <text x="450" y="110" text-anchor="middle" fill="#8b8b9e" font-size="11">tRPC · Server Actions</text>
+
+      <!-- AI -->
+      <rect x="670" y="30" width="200" height="100" rx="14" fill="#1e1e26" stroke="#ec4899" stroke-width="2"/>
+      <text x="770" y="65" text-anchor="middle" fill="#ec4899" font-size="11" font-weight="700">AI ENGINE</text>
+      <text x="770" y="88" text-anchor="middle" fill="#e4e4e8" font-size="13" font-weight="600">Gemini</text>
+      <text x="770" y="110" text-anchor="middle" fill="#8b8b9e" font-size="11">Vercel AI SDK · Nudges</text>
+
+      <!-- DB -->
+      <rect x="350" y="220" width="200" height="100" rx="14" fill="#1e1e26" stroke="#f59e0b" stroke-width="2"/>
+      <text x="450" y="255" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">DATABASE</text>
+      <text x="450" y="278" text-anchor="middle" fill="#e4e4e8" font-size="13" font-weight="600">SQLite → Turso</text>
+      <text x="450" y="300" text-anchor="middle" fill="#8b8b9e" font-size="11">Drizzle ORM · 3 tables</text>
+
+      <!-- Auth (future) -->
+      <rect x="670" y="220" width="200" height="100" rx="14" fill="#1e1e26" stroke="#2a2a35" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="770" y="255" text-anchor="middle" fill="#8b8b9e" font-size="11" font-weight="700">FUTURE</text>
+      <text x="770" y="278" text-anchor="middle" fill="#8b8b9e" font-size="13" font-weight="600">Auth · Cloud Sync</text>
+      <text x="770" y="300" text-anchor="middle" fill="#8b8b9e" font-size="11">Supabase / Clerk</text>
+
+      <!-- Arrows -->
+      <!-- Frontend → API -->
+      <line x1="230" y1="80" x2="350" y2="80" stroke="#8b8b9e" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="290" y="72" text-anchor="middle" fill="#8b8b9e" font-size="9">fetch</text>
+
+      <!-- API → AI -->
+      <line x1="550" y1="80" x2="670" y2="80" stroke="#8b8b9e" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="610" y="72" text-anchor="middle" fill="#8b8b9e" font-size="9">AI SDK</text>
+
+      <!-- API → DB -->
+      <line x1="450" y1="130" x2="450" y2="220" stroke="#8b8b9e" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="465" y="180" fill="#8b8b9e" font-size="9">read/write</text>
+
+      <!-- Arrow marker -->
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="#8b8b9e"/>
+        </marker>
+      </defs>
+
+      <!-- Legend -->
+      <rect x="30" y="360" width="12" height="12" rx="3" fill="#7c6aff"/>
+      <text x="48" y="371" fill="#8b8b9e" font-size="10">Frontend</text>
+      <rect x="120" y="360" width="12" height="12" rx="3" fill="#34d399"/>
+      <text x="138" y="371" fill="#8b8b9e" font-size="10">API</text>
+      <rect x="180" y="360" width="12" height="12" rx="3" fill="#ec4899"/>
+      <text x="198" y="371" fill="#8b8b9e" font-size="10">AI</text>
+      <rect x="230" y="360" width="12" height="12" rx="3" fill="#f59e0b"/>
+      <text x="248" y="371" fill="#8b8b9e" font-size="10">Database</text>
+      <rect x="320" y="360" width="12" height="12" rx="3" fill="none" stroke="#2a2a35" stroke-dasharray="3,2"/>
+      <text x="338" y="371" fill="#8b8b9e" font-size="10">Future</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     3. TECH STACK
+     ═══════════════════════════════════════════ -->
+<section>
+  <h2><span class="num">3</span> Tech Stack (MVP)</h2>
+  <div class="stack-grid">
+    <div class="stack-card">
+      <span class="badge frontend">Scaffolding</span>
+      <h3>create-t3-app</h3>
+      <p>Next.js + Drizzle + Tailwind + TypeScript in one command. Swap the default Postgres adapter for SQLite via <code>better-sqlite3</code>.</p>
+    </div>
+    <div class="stack-card">
+      <span class="badge frontend">Styling</span>
+      <h3>Tailwind CSS v4</h3>
+      <p>Rapid UI development with utility classes. Pairs perfectly with Next.js out of the box.</p>
+    </div>
+    <div class="stack-card">
+      <span class="badge backend">Database</span>
+      <h3>SQLite (local) → Turso (prod)</h3>
+      <p>Local dev uses <code>better-sqlite3</code>, zero infrastructure. Deploy swaps to Turso (SQLite-compatible, free tier, one-line Drizzle adapter change).</p>
+    </div>
+    <div class="stack-card">
+      <span class="badge backend">ORM</span>
+      <h3>Drizzle ORM</h3>
+      <p>Lightweight, type-safe ORM that works great with SQLite. Simple migrations.</p>
+    </div>
+    <div class="stack-card">
+      <span class="badge ai">AI Model</span>
+      <h3>Gemini</h3>
+      <p>Free API key from <strong>aistudio.google.com</strong>. Fast, cheap, handles habit extraction, insight generation, and 2-min nudges.</p>
+    </div>
+    <div class="stack-card">
+      <span class="badge ai">AI SDK</span>
+      <h3>Vercel AI SDK</h3>
+      <p><code>npm install ai @ai-sdk/google</code>. Abstracts Gemini calls, handles streaming and structured JSON parsing out of the box.</p>
+    </div>
+    <div class="stack-card">
+      <span class="badge infra">Deploy</span>
+      <h3>Vercel</h3>
+      <p>One-click deploy. Production DB is Turso (swap <code>better-sqlite3</code> → <code>@libsql/client</code> in Drizzle config). Free tier covers MVP.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why this stack?</strong> — <code>create-t3-app</code> scaffolds the entire project in one command (Next.js + Drizzle + Tailwind + TS). Gemini is free via AI Studio. Vercel AI SDK abstracts the LLM calls. SQLite locally, Turso in prod — same Drizzle schema, one adapter swap. Everything runs with <code>npm run dev</code>.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     4. DATA MODEL
+     ═══════════════════════════════════════════ -->
+<section>
+  <h2><span class="num">4</span> Data Model (3 tables)</h2>
+
+  <h3 style="margin: 1rem 0 0.5rem; font-size: 0.95rem; color: var(--accent);">entries</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Note</th></tr>
+    <tr><td><code>id</code></td><td>TEXT (UUID)</td><td>Primary key</td></tr>
+    <tr><td><code>content</code></td><td>TEXT</td><td>Free-form journal text</td></tr>
+    <tr><td><code>created_at</code></td><td>DATETIME</td><td>When the entry was written</td></tr>
+  </table>
+
+  <h3 style="margin: 1.5rem 0 0.5rem; font-size: 0.95rem; color: var(--green);">habits</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Note</th></tr>
+    <tr><td><code>id</code></td><td>TEXT (UUID)</td><td>Primary key</td></tr>
+    <tr><td><code>name</code></td><td>TEXT</td><td>e.g. "Morning run", "Doom scrolling"</td></tr>
+    <tr><td><code>sentiment</code></td><td>TEXT</td><td>positive / negative / neutral</td></tr>
+    <tr><td><code>occurrences</code></td><td>INTEGER</td><td>How many times detected</td></tr>
+    <tr><td><code>last_seen</code></td><td>DATETIME</td><td>Last entry that mentioned it</td></tr>
+  </table>
+
+  <h3 style="margin: 1.5rem 0 0.5rem; font-size: 0.95rem; color: var(--pink);">nudges</h3>
+  <table>
+    <tr><th>Column</th><th>Type</th><th>Note</th></tr>
+    <tr><td><code>id</code></td><td>TEXT (UUID)</td><td>Primary key</td></tr>
+    <tr><td><code>entry_id</code></td><td>TEXT</td><td>FK → entries</td></tr>
+    <tr><td><code>action</code></td><td>TEXT</td><td>The 2-min actionable nudge</td></tr>
+    <tr><td><code>created_at</code></td><td>DATETIME</td><td>When it was generated</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     5. AI PROMPT STRATEGY
+     ═══════════════════════════════════════════ -->
+<section>
+  <h2><span class="num">5</span> AI Prompt Strategy (2 calls)</h2>
+  <div class="flow">
+    <div class="flow-step" style="border-color: var(--pink);">
+      <div class="step-num" style="color: var(--pink);">Call 1 — On Entry Save</div>
+      <h4>Extract Habits</h4>
+      <p>Send the new entry + last 5 entries to Gemini via Vercel AI SDK. Use <code>generateObject()</code> for structured JSON: detected habits (name, sentiment) and a single 2-min nudge.</p>
+    </div>
+    <span class="arrow-right">→</span>
+    <div class="flow-step" style="border-color: var(--accent2);">
+      <div class="step-num" style="color: var(--accent2);">Call 2 — On Dashboard Load</div>
+      <h4>Generate Insights</h4>
+      <p>Send the habits table to Gemini. Use <code>generateText()</code> for a short summary: what's going well, what's slipping, overall trajectory.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Keep it cheap.</strong> Only 2 Gemini calls in the whole app. Vercel AI SDK's <code>generateObject()</code> gives us Zod-validated JSON — no manual parsing. No embeddings, no vector DB — that's for later.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     6. MVP SCREENS
+     ═══════════════════════════════════════════ -->
+<section>
+  <h2><span class="num">6</span> MVP Screens (3 pages)</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 300" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <!-- Screen 1: Journal -->
+      <rect x="30" y="30" width="250" height="240" rx="16" fill="#1e1e26" stroke="#7c6aff" stroke-width="2"/>
+      <text x="155" y="60" text-anchor="middle" fill="#7c6aff" font-size="12" font-weight="700">/ (Home — Journal)</text>
+      <rect x="50" y="78" width="210" height="80" rx="8" fill="#17171d" stroke="#2a2a35"/>
+      <text x="155" y="105" text-anchor="middle" fill="#8b8b9e" font-size="10">📝 textarea</text>
+      <text x="155" y="125" text-anchor="middle" fill="#8b8b9e" font-size="10">"Write what you've been up to..."</text>
+      <rect x="130" y="175" width="100" height="32" rx="8" fill="#7c6aff"/>
+      <text x="180" y="196" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">Save Entry</text>
+      <rect x="50" y="220" width="210" height="30" rx="8" fill="#7c6aff20" stroke="#7c6aff40"/>
+      <text x="155" y="240" text-anchor="middle" fill="#7c6aff" font-size="10" font-weight="600">⚡ Your 2-min nudge appears here</text>
+
+      <!-- Screen 2: Timeline -->
+      <rect x="325" y="30" width="250" height="240" rx="16" fill="#1e1e26" stroke="#34d399" stroke-width="2"/>
+      <text x="450" y="60" text-anchor="middle" fill="#34d399" font-size="12" font-weight="700">/timeline</text>
+      <rect x="345" y="78" width="210" height="36" rx="8" fill="#17171d" stroke="#2a2a35"/>
+      <text x="450" y="100" text-anchor="middle" fill="#8b8b9e" font-size="10">📋 Entry card — 2h ago</text>
+      <rect x="345" y="122" width="210" height="36" rx="8" fill="#17171d" stroke="#2a2a35"/>
+      <text x="450" y="144" text-anchor="middle" fill="#8b8b9e" font-size="10">📋 Entry card — 5h ago</text>
+      <rect x="345" y="166" width="210" height="36" rx="8" fill="#17171d" stroke="#2a2a35"/>
+      <text x="450" y="188" text-anchor="middle" fill="#8b8b9e" font-size="10">📋 Entry card — yesterday</text>
+      <rect x="345" y="210" width="210" height="36" rx="8" fill="#17171d" stroke="#2a2a35"/>
+      <text x="450" y="232" text-anchor="middle" fill="#8b8b9e" font-size="10">📋 ...</text>
+
+      <!-- Screen 3: Insights -->
+      <rect x="620" y="30" width="250" height="240" rx="16" fill="#1e1e26" stroke="#ec4899" stroke-width="2"/>
+      <text x="745" y="60" text-anchor="middle" fill="#ec4899" font-size="12" font-weight="700">/insights</text>
+      <rect x="640" y="78" width="100" height="50" rx="8" fill="#34d39920" stroke="#34d399"/>
+      <text x="690" y="100" text-anchor="middle" fill="#34d399" font-size="9">✅ Good habits</text>
+      <text x="690" y="117" text-anchor="middle" fill="#34d399" font-size="12" font-weight="700">5</text>
+      <rect x="750" y="78" width="100" height="50" rx="8" fill="#f59e0b20" stroke="#f59e0b"/>
+      <text x="800" y="100" text-anchor="middle" fill="#f59e0b" font-size="9">⚠️ Needs work</text>
+      <text x="800" y="117" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="700">2</text>
+      <rect x="640" y="142" width="210" height="60" rx="8" fill="#17171d" stroke="#2a2a35"/>
+      <text x="745" y="165" text-anchor="middle" fill="#8b8b9e" font-size="10">🤖 AI Summary</text>
+      <text x="745" y="185" text-anchor="middle" fill="#8b8b9e" font-size="9">"You've been consistent with..."</text>
+      <rect x="640" y="215" width="210" height="36" rx="8" fill="#17171d" stroke="#2a2a35"/>
+      <text x="745" y="238" text-anchor="middle" fill="#8b8b9e" font-size="10">📊 Habit streak list</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     7. BUILD ORDER
+     ═══════════════════════════════════════════ -->
+<section>
+  <h2><span class="num">7</span> Build Order</h2>
+  <ul>
+    <li><strong>Phase 1:</strong> Run <code>create-t3-app</code>, swap Postgres → SQLite (<code>better-sqlite3</code>), define the 3 Drizzle tables.</li>
+    <li><strong>Phase 2:</strong> Build the Journal page — textarea → save to DB → show past entries.</li>
+    <li><strong>Phase 3:</strong> Wire up Gemini via Vercel AI SDK — extract habits + generate nudge on entry save.</li>
+    <li><strong>Phase 4:</strong> Build the Insights page — show habits, streaks, AI summary.</li>
+    <li><strong>Phase 5:</strong> Polish — styling, responsive layout, loading states, error handling.</li>
+  </ul>
+  <div class="callout">
+    <strong>Estimated time:</strong> ~2-3 focused sessions to get a working MVP. Each phase is independently testable.
+  </div>
+</section>
+
+</body>
+</html>

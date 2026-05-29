@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phase 1 — Scaffolding</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0e0e12;
+      --surface: #17171d;
+      --card: #1e1e26;
+      --border: #2a2a35;
+      --text: #e4e4e8;
+      --muted: #8b8b9e;
+      --accent: #7c6aff;
+      --accent2: #44d9e6;
+      --green: #34d399;
+      --orange: #f59e0b;
+      --pink: #ec4899;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.25rem;
+    }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2rem; }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h2 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    pre {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: var(--text);
+      margin: 0.75rem 0;
+    }
+    pre .comment { color: var(--muted); }
+    pre .cmd { color: var(--green); }
+    pre .flag { color: var(--accent); }
+    pre .file { color: var(--orange); }
+    p, li { font-size: 0.9rem; }
+    ul { padding-left: 1.25rem; }
+    li { margin-bottom: 0.3rem; }
+    li strong { color: var(--accent2); }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: var(--card);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .callout {
+      background: #7c6aff15;
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.85rem 1.1rem;
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .callout strong { color: var(--text); }
+    .file-tree {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      line-height: 1.8;
+      color: var(--muted);
+      margin: 0.75rem 0;
+    }
+    .file-tree .dir { color: var(--accent); }
+    .file-tree .new { color: var(--green); }
+    .file-tree .mod { color: var(--orange); }
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 999px;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    .badge.new  { background: #34d39930; color: var(--green); }
+    .badge.mod  { background: #f59e0b30; color: var(--orange); }
+    .badge.del  { background: #ef444430; color: #ef4444; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: var(--card);
+      border-bottom: 2px solid var(--border);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    td {
+      padding: 0.45rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    tr:last-child td { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+<h1>Phase 1 — Scaffolding</h1>
+<p class="subtitle">Get the T3 app running with SQLite, Drizzle schema, and AI SDK deps installed. Nothing more.</p>
+
+<!-- ── STEP 1 ── -->
+<section>
+  <h2><span class="num">1</span> Create the T3 app</h2>
+  <pre><span class="comment"># from the Introspect repo root</span>
+<span class="cmd">npx</span> <span class="flag">create-t3-app@latest</span> ./ <span class="flag">--noGit</span></pre>
+  <p>Choose these options when prompted:</p>
+  <table>
+    <tr><th>Option</th><th>Value</th></tr>
+    <tr><td>TypeScript</td><td>Yes</td></tr>
+    <tr><td>Tailwind CSS</td><td>Yes</td></tr>
+    <tr><td>tRPC</td><td>Yes</td></tr>
+    <tr><td>Drizzle</td><td>Yes</td></tr>
+    <tr><td>NextAuth</td><td>No</td></tr>
+    <tr><td>DB Provider</td><td>SQLite</td></tr>
+    <tr><td>App Router</td><td>Yes</td></tr>
+  </table>
+  <div class="callout">
+    <strong>--noGit</strong> because we already have a git repo initialized.
+  </div>
+</section>
+
+<!-- ── STEP 2 ── -->
+<section>
+  <h2><span class="num">2</span> Install extra deps</h2>
+  <pre><span class="comment"># Vercel AI SDK + Gemini provider</span>
+<span class="cmd">npm install</span> <span class="flag">ai @ai-sdk/google</span>
+
+<span class="comment"># UUID generation for primary keys</span>
+<span class="cmd">npm install</span> <span class="flag">uuid</span>
+<span class="cmd">npm install -D</span> <span class="flag">@types/uuid</span></pre>
+</section>
+
+<!-- ── STEP 3 ── -->
+<section>
+  <h2><span class="num">3</span> Define the Drizzle schema</h2>
+  <p>Replace the default T3 schema in <code>src/server/db/schema.ts</code> with our 3 tables:</p>
+  <pre><span class="comment">// src/server/db/schema.ts</span>
+
+<span class="file">entries</span>
+  id          TEXT  PRIMARY KEY  (uuid)
+  content     TEXT  NOT NULL
+  createdAt   INTEGER  (unix timestamp, default now)
+
+<span class="file">habits</span>
+  id          TEXT  PRIMARY KEY  (uuid)
+  name        TEXT  NOT NULL
+  sentiment   TEXT  NOT NULL     ("positive" | "negative" | "neutral")
+  occurrences INTEGER  DEFAULT 1
+  lastSeen    INTEGER  (unix timestamp)
+
+<span class="file">nudges</span>
+  id          TEXT  PRIMARY KEY  (uuid)
+  entryId     TEXT  FK → entries.id
+  action      TEXT  NOT NULL
+  createdAt   INTEGER  (unix timestamp, default now)</pre>
+</section>
+
+<!-- ── STEP 4 ── -->
+<section>
+  <h2><span class="num">4</span> Set up env vars</h2>
+  <pre><span class="comment"># .env</span>
+<span class="file">GOOGLE_GENERATIVE_AI_API_KEY</span>=<span class="muted">your-key-from-aistudio.google.com</span></pre>
+  <p>Add the var to <code>src/env.js</code> (T3's env validation) so it's type-safe.</p>
+</section>
+
+<!-- ── STEP 5 ── -->
+<section>
+  <h2><span class="num">5</span> Push the schema & verify</h2>
+  <pre><span class="comment"># Create the SQLite DB and push the schema</span>
+<span class="cmd">npm run</span> <span class="flag">db:push</span>
+
+<span class="comment"># Start the dev server — should show the T3 landing page</span>
+<span class="cmd">npm run</span> <span class="flag">dev</span></pre>
+  <div class="callout">
+    <strong>Done when:</strong> <code>localhost:3000</code> loads the T3 splash page, <code>db.sqlite</code> exists with the 3 tables, and <code>npm run build</code> passes with zero errors.
+  </div>
+</section>
+
+<!-- ── FILE TREE ── -->
+<section>
+  <h2><span class="num">✓</span> What we'll have after Phase 1</h2>
+  <div class="file-tree">
+    <span class="dir">Introspect/</span><br>
+    ├── <span class="dir">src/</span><br>
+    │   ├── <span class="dir">app/</span>            — Next.js app router (default T3 page)<br>
+    │   ├── <span class="dir">server/</span><br>
+    │   │   ├── <span class="dir">db/</span><br>
+    │   │   │   ├── index.ts    — SQLite connection via better-sqlite3<br>
+    │   │   │   └── schema.ts   <span class="mod">← our 3 tables</span><br>
+    │   │   └── <span class="dir">api/</span>        — tRPC routers (empty for now)<br>
+    │   └── <span class="dir">env.js</span>       <span class="mod">← add GOOGLE_GENERATIVE_AI_API_KEY</span><br>
+    ├── .env                 <span class="new">← API key</span><br>
+    ├── drizzle.config.ts    — points to SQLite<br>
+    ├── db.sqlite            <span class="new">← created by db:push</span><br>
+    └── package.json         <span class="mod">← ai, @ai-sdk/google, uuid added</span>
+  </div>
+</section>
+
+</body>
+</html>
