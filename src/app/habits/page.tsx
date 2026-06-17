@@ -1,8 +1,8 @@
 import { HydrateClient } from "~/trpc/server";
-import { JournalEditor } from "./_components/journal";
-import { Nav } from "./_components/nav";
+import { HabitsView } from "../_components/habits-view";
+import { Nav } from "../_components/nav";
 
-export default function Home() {
+export default function HabitsPage() {
   return (
     <HydrateClient>
       <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 py-16 text-white">
@@ -10,13 +10,13 @@ export default function Home() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-                Introspect
+                Habits
               </h1>
-              <p className="mt-2 text-white/50">Check in. Track what you do. Spot your habits.</p>
+              <p className="mt-2 text-white/50">Everything the AI has spotted across your check-ins.</p>
             </div>
             <Nav />
           </div>
-          <JournalEditor />
+          <HabitsView />
         </div>
       </main>
     </HydrateClient>

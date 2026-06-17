@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Introspect — Codebase Knowledge Graph</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ─── MODERN DESIGN SYSTEM & TOKENS ─── */
+    :root {
+      --bg: #090b11;
+      --surface-glass: rgba(18, 22, 35, 0.7);
+      --border-glass: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(124, 106, 255, 0.4);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      
+      /* Vibrant Tailored HSL Accents */
+      --primary: #7c6aff;
+      --primary-glow: rgba(124, 106, 255, 0.25);
+      
+      --sky: #38bdf8;
+      --sky-glow: rgba(56, 189, 248, 0.25);
+      
+      --indigo: #6366f1;
+      --indigo-glow: rgba(99, 102, 241, 0.25);
+      
+      --violet: #8b5cf6;
+      --violet-glow: rgba(139, 92, 246, 0.25);
+      
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      
+      --pink: #ec4899;
+      --pink-glow: rgba(236, 72, 153, 0.25);
+      
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.25);
+
+      --red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── GLOWING DECORATIVE BACKGROUND ─── */
+    .bg-glowing-blob {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124, 106, 255, 0.08) 0%, rgba(9, 11, 17, 0) 70%);
+      top: -150px;
+      left: -150px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glowing-blob-right {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.05) 0%, rgba(9, 11, 17, 0) 70%);
+      bottom: -100px;
+      right: -100px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEADER BAR ─── */
+    header {
+      background: rgba(9, 11, 17, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-glass);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--pink));
+      box-shadow: 0 0 15px var(--primary-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+
+    .logo-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .search-filter-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 450px;
+    }
+
+    .search-box {
+      position: relative;
+      flex-grow: 1;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(13, 17, 28, 0.8);
+      border: 1px solid var(--border-glass);
+      border-radius: 8px;
+      padding: 10px 16px 10px 38px;
+      color: var(--text);
+      font-size: 0.85rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(124, 106, 255, 0.2);
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    .search-box input:focus + svg {
+      color: var(--primary);
+    }
+
+    /* ─── MAIN DASHBOARD SPLIT ─── */
+    main {
+      flex-grow: 1;
+      display: flex;
+      height: calc(100vh - 78px);
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ─── LEFT: GRAPH PANEL ─── */
+    .graph-panel {
+      flex: 3;
+      position: relative;
+      border-right: 1px solid var(--border-glass);
+      background: radial-gradient(circle at center, rgba(16, 20, 36, 0.4) 0%, rgba(9, 11, 17, 0.7) 100%);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .graph-header {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      background: rgba(9, 11, 17, 0.2);
+    }
+
+    .graph-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .graph-instructions {
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border-glass);
+    }
+
+    .svg-container {
+      flex-grow: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      user-select: none;
+    }
+
+    svg.network-graph {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ─── SVG STYLING & ANIMATIONS ─── */
+    .connector-path {
+      fill: none;
+      stroke: #1e293b;
+      stroke-width: 2.5;
+      transition: all 0.3s ease;
+      stroke-dasharray: 4 2;
+    }
+
+    .connector-path.flow-active {
+      stroke: var(--primary);
+      stroke-width: 3;
+      stroke-dasharray: none;
+      filter: drop-shadow(0 0 6px var(--primary-glow));
+    }
+
+    .connector-path.flow-hovered {
+      stroke: var(--sky);
+      stroke-width: 3.5;
+      stroke-dasharray: none;
+      filter: drop-shadow(0 0 8px var(--sky-glow));
+    }
+
+    .connector-arrow {
+      fill: #1e293b;
+      transition: fill 0.3s;
+    }
+
+    .connector-path.flow-active + marker .connector-arrow {
+      fill: var(--primary);
+    }
+
+    /* Glowing Node Styles */
+    .node-group {
+      cursor: pointer;
+      outline: none;
+    }
+
+    .node-bg {
+      fill: rgba(13, 17, 28, 0.85);
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 2.5;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .node-group:hover .node-bg {
+      stroke: var(--hover-color, var(--primary));
+      fill: rgba(20, 24, 38, 0.95);
+      transform: scale(1.05);
+      transform-origin: var(--cx) var(--cy);
+      filter: drop-shadow(0 0 12px var(--glow-color, var(--primary-glow)));
+    }
+
+    .node-group.node-active .node-bg {
+      stroke: var(--hover-color, var(--primary));
+      fill: rgba(30, 36, 58, 0.95);
+      stroke-width: 3.5;
+      transform: scale(1.08);
+      transform-origin: var(--cx) var(--cy);
+      filter: drop-shadow(0 0 16px var(--glow-color, var(--primary-glow)));
+    }
+
+    .node-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      fill: var(--text);
+      letter-spacing: 0.02em;
+      transition: fill 0.2s;
+      pointer-events: none;
+      text-anchor: middle;
+    }
+
+    .node-sublabel {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.58rem;
+      font-weight: 500;
+      fill: var(--muted);
+      transition: fill 0.2s;
+      pointer-events: none;
+      text-anchor: middle;
+    }
+
+    .node-group:hover .node-label {
+      fill: #fff;
+    }
+
+    .node-group.node-active .node-label {
+      fill: #fff;
+    }
+
+    .node-icon {
+      fill: var(--muted);
+      transition: fill 0.2s;
+      pointer-events: none;
+    }
+
+    .node-group:hover .node-icon {
+      fill: var(--hover-color, var(--primary));
+    }
+
+    .node-group.node-active .node-icon {
+      fill: var(--hover-color, var(--primary));
+    }
+
+    /* ─── LEGEND BAR ─── */
+    .legend-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-glass);
+      padding: 12px 18px;
+      border-radius: 12px;
+      display: flex;
+      gap: 16px;
+      font-size: 0.72rem;
+      pointer-events: auto;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ─── RIGHT: ARTICLE WIKI PANEL ─── */
+    .wiki-panel {
+      flex: 2;
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 420px;
+      transition: all 0.3s ease;
+    }
+
+    .wiki-nav {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-glass);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      background: rgba(9, 11, 17, 0.3);
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border-glass);
+      padding: 6px 12px;
+      border-radius: 16px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: var(--text);
+    }
+
+    .nav-btn.nav-active {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(124, 106, 255, 0.1);
+    }
+
+    .wiki-scroller {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 32px;
+      scroll-behavior: smooth;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ─── ARTICLE STYLING ─── */
+    .article-container {
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .article-container.fade-out {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .article-header-chip {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: var(--accent-glow, var(--primary-glow));
+      border: 1px solid var(--accent-color, var(--primary));
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .article-container h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .article-subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .article-divider {
+      height: 1px;
+      background: linear-gradient(to right, var(--border-glass), transparent);
+      margin: 24px 0;
+    }
+
+    /* Markdown Element Styles */
+    .wiki-content p {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+    }
+
+    .wiki-content h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 24px 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wiki-content ul, .wiki-content ol {
+      padding-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    .wiki-content li {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+
+    .wiki-content strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Callout Alert */
+    .wiki-callout {
+      background: rgba(124, 106, 255, 0.08);
+      border-left: 3px solid var(--primary);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 20px 0;
+    }
+    
+    .wiki-callout.alert-warning {
+      background: rgba(245, 158, 11, 0.06);
+      border-left-color: var(--amber);
+    }
+
+    .wiki-callout-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wiki-callout p {
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    /* Inline Code */
+    .wiki-content code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.78rem;
+      background: #0d1117;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #7dd3fc;
+    }
+
+    /* Preformatted Code Blocks */
+    .wiki-content pre {
+      background: #0b0d16;
+      border: 1px solid var(--border-glass);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 18px 0;
+      overflow-x: auto;
+    }
+
+    .wiki-content pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+      display: block;
+    }
+
+    /* Code Highlighting Mock Styles */
+    .keyword { color: #f472b6; font-weight: 600; }
+    .string { color: #34d399; }
+    .comment { color: #64748b; font-style: italic; }
+    .number { color: #fbbf24; }
+    .type { color: #38bdf8; }
+    .fn { color: #818cf8; }
+
+    /* Schema Table */
+    .wiki-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin: 16px 0;
+      background: rgba(13, 17, 28, 0.4);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-glass);
+    }
+
+    .wiki-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(9, 11, 17, 0.6);
+      border-bottom: 2px solid var(--border-glass);
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .wiki-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+
+    .wiki-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pk-badge {
+      color: #fbbf24 !important;
+      font-weight: 700;
+    }
+
+    .fk-badge {
+      color: #a78bfa !important;
+    }
+
+    /* Search Highlight */
+    .highlight-match {
+      background: rgba(245, 158, 11, 0.25);
+      border-bottom: 1px solid var(--amber);
+      color: #fff;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    .no-results {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+    
+    .no-results svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      main {
+        flex-direction: column;
+        height: auto;
+      }
+      .graph-panel {
+        height: 500px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-glass);
+      }
+      .wiki-panel {
+        height: 600px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glowing-blob"></div>
+  <div class="bg-glowing-blob-right"></div>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER BAR
+       ═══════════════════════════════════════════ -->
+  <header>
+    <div class="logo-area">
+      <div class="logo-badge">I</div>
+      <div class="logo-text">
+        <h1>Introspect Wiki</h1>
+        <p>Interactive Codebase Knowledge Base</p>
+      </div>
+    </div>
+    
+    <div class="search-filter-area">
+      <div class="search-box">
+        <input type="text" id="wiki-search" placeholder="Search schemas, routers, workflows, code...">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN APPLICATION LAYOUT
+       ═══════════════════════════════════════════ -->
+  <main>
+    
+    <!-- LEFT: NETWORK NODE GRAPH -->
+    <div class="graph-panel">
+      <div class="graph-header">
+        <div class="graph-title">
+          <svg style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2;" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94-3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"></path>
+          </svg>
+          Interactive Codebase Topology
+        </div>
+        <div class="graph-instructions">Click nodes to read articles</div>
+      </div>
+      
+      <div class="svg-container">
+        <svg class="network-graph" viewBox="0 0 950 500" xmlns="http://www.w3.org/2000/svg">
+          <!-- Definitions for markers and filters -->
+          <defs>
+            <filter id="glow-primary" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            
+            <marker id="arrow-default" markerWidth="6" markerHeight="6" refX="28" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" class="connector-arrow" />
+            </marker>
+          </defs>
+
+          <!-- CONNECTING PATHS (BEZIER CURVES) -->
+          <!-- Client -> tRPC Hooks -->
+          <path id="path-client-hooks" d="M 120 250 C 145 250, 155 250, 180 250" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- Hooks -> Route Handler -->
+          <path id="path-hooks-api" d="M 260 250 C 290 250, 310 160, 340 160" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- Hooks -> RSC Caller -->
+          <path id="path-hooks-rsc" d="M 260 250 C 290 250, 310 340, 340 340" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- Route Handler -> Context -->
+          <path id="path-api-context" d="M 420 160 C 450 160, 460 250, 480 250" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- RSC Caller -> Context -->
+          <path id="path-rsc-context" d="M 420 340 C 450 340, 460 250, 480 250" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- Context -> Routers -->
+          <path id="path-context-routers" d="M 560 250 C 585 250, 595 250, 620 250" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- Routers -> Database -->
+          <path id="path-routers-db" d="M 700 250 C 730 250, 740 170, 770 170" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- Routers -> AI -->
+          <path id="path-routers-ai" d="M 700 250 C 730 250, 740 330, 770 330" class="connector-path" marker-end="url(#arrow-default)" />
+          
+          <!-- Dev Workflows -> Context (floating reference) -->
+          <path id="path-dev-context" d="M 490 100 C 490 130, 490 180, 490 210" class="connector-path" style="stroke-dasharray: 2 4;" />
+
+          
+          <!-- INTERACTIVE NODE GROUPS -->
+          
+          <!-- Node 1: Browser Client -->
+          <g id="node-client" class="node-group" onclick="selectNode('architecture')" data-article="architecture" style="--hover-color: var(--sky); --glow-color: var(--sky-glow); --cx: 80px; --cy: 250px;">
+            <rect x="40" y="210" width="80" height="80" rx="14" class="node-bg" />
+            <!-- Laptop SVG Icon -->
+            <path class="node-icon" d="M52 230 h56 v26 h-56 z M48 258 h64 v4 h-64 z" />
+            <text x="80" y="272" class="node-label">Client UI</text>
+            <text x="80" y="282" class="node-sublabel">React 19 / TW</text>
+          </g>
+
+          <!-- Node 2: Client tRPC Hooks -->
+          <g id="node-hooks" class="node-group" onclick="selectNode('api')" data-article="api" style="--hover-color: var(--sky); --glow-color: var(--sky-glow); --cx: 220px; --cy: 250px;">
+            <rect x="180" y="210" width="80" height="80" rx="14" class="node-bg" />
+            <!-- Hook Symbol -->
+            <path class="node-icon" d="M210 230 c5 0, 10 5, 10 10 v12 c0 5, -5 10, -10 10 c-5 0, -10 -5, -10 -10 v-12 c0 -5, 5 -10, 10 -10 Z" stroke-width="2" fill="none" stroke="currentColor" />
+            <text x="220" y="272" class="node-label">tRPC Hooks</text>
+            <text x="220" y="282" class="node-sublabel">react.tsx</text>
+          </g>
+
+          <!-- Node 3: Next.js API Route Handler -->
+          <g id="node-api" class="node-group" onclick="selectNode('api')" data-article="api" style="--hover-color: var(--indigo); --glow-color: var(--indigo-glow); --cx: 380px; --cy: 160px;">
+            <rect x="340" y="120" width="80" height="80" rx="14" class="node-bg" />
+            <!-- HTTP Server Icon -->
+            <path class="node-icon" d="M362 138 h36 v8 h-36 z M362 152 h36 v8 h-36 z M362 166 h36 v8 h-36 z" />
+            <text x="380" y="182" class="node-label">HTTP Handler</text>
+            <text x="380" y="192" class="node-sublabel">tRPC API Route</text>
+          </g>
+
+          <!-- Node 4: RSC Server Caller -->
+          <g id="node-rsc" class="node-group" onclick="selectNode('architecture')" data-article="architecture" style="--hover-color: var(--indigo); --glow-color: var(--indigo-glow); --cx: 380px; --cy: 340px;">
+            <rect x="340" y="300" width="80" height="80" rx="14" class="node-bg" />
+            <!-- RSC Symbol -->
+            <path class="node-icon" d="M365 315 v30 l30 -15 z" />
+            <text x="380" y="362" class="node-label">RSC Caller</text>
+            <text x="380" y="372" class="node-sublabel">server.ts</text>
+          </g>
+
+          <!-- Node 5: tRPC API Context & Middleware -->
+          <g id="node-context" class="node-group" onclick="selectNode('api')" data-article="api" style="--hover-color: var(--violet); --glow-color: var(--violet-glow); --cx: 520px; --cy: 250px;">
+            <rect x="480" y="210" width="80" height="80" rx="14" class="node-bg" />
+            <!-- Key / Filter icon -->
+            <path class="node-icon" d="M505 230 h30 v6 l-10 10 v10 h-10 v-10 l-10 -10 z" />
+            <text x="520" y="272" class="node-label">tRPC Context</text>
+            <text x="520" y="282" class="node-sublabel">trpc.ts & Latency</text>
+          </g>
+
+          <!-- Node 6: tRPC Root & subRouters -->
+          <g id="node-routers" class="node-group" onclick="selectNode('api')" data-article="api" style="--hover-color: var(--violet); --glow-color: var(--violet-glow); --cx: 660px; --cy: 250px;">
+            <rect x="620" y="210" width="80" height="80" rx="14" class="node-bg" />
+            <!-- Network Nodes symbol -->
+            <path class="node-icon" d="M650 230 c5 0, 8 3, 8 8 s-3 8, -8 8 c-5 0, -8 -3, -8 -8 s3 -8, 8 -8 Z M670 245 c3 0, 5 2, 5 5 s-2 5, -5 5 s-5 -2, -5 -5 s2 -5, 5 -5 Z" />
+            <text x="660" y="272" class="node-label">Sub Routers</text>
+            <text x="660" y="282" class="node-sublabel">routers/*.ts</text>
+          </g>
+
+          <!-- Node 7: Drizzle ORM client & SQLite -->
+          <g id="node-database" class="node-group" onclick="selectNode('database')" data-article="database" style="--hover-color: var(--emerald); --glow-color: var(--emerald-glow); --cx: 810px; --cy: 160px;">
+            <rect x="770" y="120" width="80" height="80" rx="14" class="node-bg" />
+            <!-- Database cylinder symbol -->
+            <path class="node-icon" d="M790 135 c0 -4, 18 -4, 40 0 v8 c0 4, -18 4, -40 0 Z M790 145 v8 c0 4, 18 4, 40 0 v-8 Z M790 155 v8 c0 4, 18 4, 40 0 v-8 Z" />
+            <text x="810" y="182" class="node-label">Database DB</text>
+            <text x="810" y="192" class="node-sublabel">SQLite / Drizzle</text>
+          </g>
+
+          <!-- Node 8: Google Gemini AI API -->
+          <g id="node-ai_integration" class="node-group" onclick="selectNode('ai_integration')" data-article="ai_integration" style="--hover-color: var(--pink); --glow-color: var(--pink-glow); --cx: 810px; --cy: 340px;">
+            <rect x="770" y="300" width="80" height="80" rx="14" class="node-bg" />
+            <!-- Spark / Sparkles AI icon -->
+            <path class="node-icon" d="M800 315 l4 8 l8 4 l-8 4 l-4 8 l-4 -8 l-8 -4 l8 -4 z M814 310 l2 4 l4 2 l-4 2 l-2 4 l-2 -4 l-4 -2 l4 -2 z" />
+            <text x="810" y="362" class="node-label">AI Engine</text>
+            <text x="810" y="372" class="node-sublabel">Gemini SDK</text>
+          </g>
+
+          <!-- Node 9: Developer Workflows & Git -->
+          <g id="node-workflows" class="node-group" onclick="selectNode('workflows')" data-article="workflows" style="--hover-color: var(--amber); --glow-color: var(--amber-glow); --cx: 490px; --cy: 60px;">
+            <rect x="450" y="20" width="80" height="60" rx="12" class="node-bg" />
+            <!-- Git branch symbol -->
+            <path class="node-icon" d="M480 40 c3 0, 5 2, 5 5 s-2 5, -5 5 s-5 -2, -5 -5 s2 -5, 5 -5 Z M500 40 c3 0, 5 2, 5 5 s-2 5, -5 5 c-2 0, -4.5 -1.5, -4.9 -4 h-10 c0 3, -1 5, -3.1 6.5 c-1.5 1, -2 2.5, -2 4.5" fill="none" stroke="currentColor" stroke-width="2" />
+            <text x="490" y="65" class="node-label" style="font-size: 0.65rem;">Dev Workflows</text>
+            <text x="490" y="73" class="node-sublabel" style="font-size: 0.52rem;">Git & Gates</text>
+          </g>
+        </svg>
+
+        <!-- FLOATING LEGEND -->
+        <div class="legend-bar">
+          <div class="legend-item">
+            <span class="legend-dot" style="background: var(--sky)"></span>
+            Client Layer
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: var(--indigo)"></span>
+            API Gate
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: var(--violet)"></span>
+            tRPC Router
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: var(--emerald)"></span>
+            Drizzle DB
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: var(--pink)"></span>
+            Gemini AI
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- RIGHT: WIKI ARTICLE PANEL -->
+    <div class="wiki-panel">
+      <!-- Nav Tabs -->
+      <div class="wiki-nav">
+        <button class="nav-btn nav-active" onclick="selectNode('architecture')" id="tab-architecture">🏛️ Architecture</button>
+        <button class="nav-btn" onclick="selectNode('database')" id="tab-database">💾 Database</button>
+        <button class="nav-btn" onclick="selectNode('api')" id="tab-api">⚡ tRPC API</button>
+        <button class="nav-btn" onclick="selectNode('ai_integration')" id="tab-ai_integration">🤖 Gemini AI</button>
+        <button class="nav-btn" onclick="selectNode('workflows')" id="tab-workflows">🔄 Workflows</button>
+      </div>
+      
+      <!-- Article Content Scroller -->
+      <div class="wiki-scroller" id="wiki-scroller">
+        <div class="article-container" id="article-content">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+    </div>
+    
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       ARTICLE DATABASE & UTILS JAVASCRIPT
+       ═══════════════════════════════════════════ -->
+  <script>
+    // ─── ARTICLE STORAGE ───
+    const articles = {
+      architecture: {
+        title: "System Architecture & Request Flow",
+        subtitle: "High-level design of Next.js 15, App Router routing logic, and step-by-step tracing.",
+        category: "architecture",
+        chip: "System Architecture",
+        color: "var(--sky)",
+        glow: "var(--sky-glow)",
+        nodes: ["node-client", "node-rsc"],
+        paths: ["path-client-hooks", "path-hooks-rsc", "path-rsc-context"],
+        content: `
+          <p>Introspect is structured around a modern, unified, end-to-end type-safe TypeScript design utilizing Next.js 15, tRPC 11, and Drizzle ORM.</p>
+          
+          <h3>🛠️ Core Technology Stack</h3>
+          <ul>
+            <li><strong>Next.js 15 (App Router, React 19)</strong>: Serves pages using React Server Components (RSC) for lightning-fast loads, falling back to Client Components for local inputs.</li>
+            <li><strong>tRPC 11</strong>: Integrates Client and Server procedures with compile-time type validation, making endpoints feel like local library calls.</li>
+            <li><strong>LibSQL / SQLite</strong>: Employs the <code>@libsql/client</code> driver operating locally as a flat file (<code>db.sqlite</code>) and deploying effortlessly to Turso.</li>
+            <li><strong>Vercel AI SDK v6</strong>: Standardizes server-side communication with Google Gemini using structured schemas.</li>
+          </ul>
+
+          <div class="wiki-callout">
+            <div class="wiki-callout-title">
+              <span class="legend-dot" style="background: var(--sky)"></span>
+              RSC vs. Client Components Boundary
+            </div>
+            <p>RSC components (like <code>src/app/page.tsx</code>) query tRPC directly in-memory using our server-side caller inside <code>src/trpc/server.ts</code>, while interactive actions (like saves) rely on browser-level React Query calls in <code>src/trpc/react.tsx</code>.</p>
+          </div>
+
+          <h3>🔄 Lifecycle of an API Request</h3>
+          <p>Tracing the complete path of a user saving a daily journal entry:</p>
+          <ol>
+            <li><strong>Client Action</strong>: The user types their entry into a form and clicks "Save". This triggers a tRPC React Query mutation:
+              <pre><code><span class="keyword">const</span> mutation = api.entries.create.<span class="fn">useMutation</span>();
+mutation.<span class="fn">mutate</span>({ content: <span class="string">"Today I ran 5km..."</span> });</code></pre>
+            </li>
+            <li><strong>tRPC Loopback Request</strong>: The mutation is serialized via <code>superjson</code> and dispatched to our Next.js App Router endpoint at <code>src/app/api/trpc/[trpc]/route.ts</code>.</li>
+            <li><strong>Context Generation</strong>: The route handler intercepts the query and constructs the call context (<code>src/server/api/trpc.ts</code>), attaching a persistent database client (<code>ctx.db</code>).</li>
+            <li><strong>Timing Middleware Execution</strong>: In development, our custom <code>timingMiddleware</code> triggers a random delay between <code>100ms</code> and <code>500ms</code>. This helps developers immediately notice and resolve database query waterfalls in the UI before code gets checked in.</li>
+            <li><strong>Procedure Handler Matching</strong>: tRPC forwards the query parameters and context to the corresponding procedure in the sub-router.</li>
+            <li><strong>Data Operations & AI Triggers</strong>: The procedure writes the entry content into <code>introspect_entries</code> in SQLite, then schedules a Vercel AI SDK call to Gemini to extract habits and cache a custom 2-minute actionable nudge in the database.</li>
+            <li><strong>UI Resolution</strong>: The serializable response completes and returns to the browser, updating React states and refreshing components dynamically.</li>
+          </ol>
+        `
+      },
+      database: {
+        title: "Database Layer & SQLite Schemas",
+        subtitle: "A detailed guide to LibSQL, Drizzle config, and the three active database tables.",
+        category: "database",
+        chip: "Database & Drizzle",
+        color: "var(--emerald)",
+        glow: "var(--emerald-glow)",
+        nodes: ["node-database"],
+        paths: ["path-routers-db"],
+        content: `
+          <p>Our database infrastructure is powered by LibSQL, a highly optimized fork of SQLite designed by Turso. It operates locally as a flat file (<code>db.sqlite</code>) requiring zero Docker configuration.</p>
+
+          <h3>⚙️ Connection Caching (HMR Shielding)</h3>
+          <p>During active Next.js development, hot module reloading restarts files rapidly. To prevent exhausting available file descriptors, we cache the database connection inside <code>src/server/db/index.ts</code>:</p>
+          <pre><code><span class="keyword">const</span> globalForDb = globalThis <span class="keyword">as</span> <span class="type">any</span>;
+<span class="keyword">export const</span> client = globalForDb.client ?? <span class="fn">createClient</span>({ url: env.DATABASE_URL });
+<span class="keyword">if</span> (env.NODE_ENV !== <span class="string">"production"</span>) globalForDb.client = client;</code></pre>
+
+          <h3>📊 Active Table Specifications</h3>
+          <p>We declare our three relational SQLite schemas in <code>src/server/db/schema.ts</code>. All tables are automatically prefixed with <code>introspect_</code> at runtime.</p>
+
+          <h3>1. Entries Table (<code>introspect_entries</code>)</h3>
+          <table class="wiki-table">
+            <thead>
+              <tr><th>Column</th><th>SQLite Type</th><th>Key</th><th>Default</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="pk-badge">id</td><td>TEXT</td><td>PK</td><td>-</td><td>Primary Key UUIDv4 string.</td></tr>
+              <tr><td>content</td><td>TEXT</td><td>-</td><td>-</td><td>Free-form journal text.</td></tr>
+              <tr><td>createdAt</td><td>INTEGER</td><td>-</td><td>(unixepoch())</td><td>Creation Unix timestamp.</td></tr>
+            </tbody>
+          </table>
+
+          <h3>2. Habits Table (<code>introspect_habits</code>)</h3>
+          <table class="wiki-table">
+            <thead>
+              <tr><th>Column</th><th>SQLite Type</th><th>Key</th><th>Default</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="pk-badge">id</td><td>TEXT</td><td>PK</td><td>-</td><td>Primary Key UUIDv4 string.</td></tr>
+              <tr><td>name</td><td>TEXT</td><td>-</td><td>-</td><td>E.g. "Late night screen time".</td></tr>
+              <tr><td>sentiment</td><td>TEXT</td><td>-</td><td>-</td><td>"positive" / "negative" / "neutral".</td></tr>
+              <tr><td>occurrences</td><td>INTEGER</td><td>-</td><td>1</td><td>Incrementing extraction counter.</td></tr>
+              <tr><td>lastSeen</td><td>INTEGER</td><td>-</td><td>-</td><td>Unix timestamp of last extraction.</td></tr>
+            </tbody>
+          </table>
+
+          <h3>3. Nudges Table (<code>introspect_nudges</code>)</h3>
+          <table class="wiki-table">
+            <thead>
+              <tr><th>Column</th><th>SQLite Type</th><th>Key</th><th>Default</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="pk-badge">id</td><td>TEXT</td><td>PK</td><td>-</td><td>Primary Key UUIDv4.</td></tr>
+              <tr><td class="fk-badge">entryId</td><td>TEXT</td><td>FK</td><td>-</td><td>Fk reference to introspect_entries.id.</td></tr>
+              <tr><td>action</td><td>TEXT</td><td>-</td><td>-</td><td>The actionable 2-min micro-task.</td></tr>
+              <tr><td>createdAt</td><td>INTEGER</td><td>-</td><td>(unixepoch())</td><td>Unix timestamp of creation.</td></tr>
+            </tbody>
+          </table>
+
+          <h3>🔄 Database Pushes & Management</h3>
+          <p>Prototyping schemas is fast. Rather than managing complex migration scripts locally, run a direct push schema synchronization:</p>
+          <pre><code><span class="comment"># Sync schemas directly to local db.sqlite</span>
+npm run db:push
+
+<span class="comment"># Launch the Drizzle Visual explorer studio</span>
+npx drizzle-kit studio</code></pre>
+        `
+      },
+      api: {
+        title: "tRPC API Layer & Custom Middleware",
+        subtitle: "Type-safe communications, latency injection middleware, context bindings, and procedures.",
+        category: "api",
+        chip: "tRPC API Gateway",
+        color: "var(--violet)",
+        glow: "var(--violet-glow)",
+        nodes: ["node-hooks", "node-api", "node-context", "node-routers"],
+        paths: ["path-hooks-api", "path-api-context", "path-context-routers"],
+        content: `
+          <p>We leverage <strong>tRPC 11</strong> to provide zero-boilerplate typesafe connections. Changing a Zod input structure in the backend immediately flags errors inside Client Components before the code compiling process even starts.</p>
+
+          <h3>⚡ Custom Latency Middleware</h3>
+          <p>To discourage developers from stacking multiple independent sequential fetch calls (network waterfalls), we validate procedure executions using a custom <code>timingMiddleware</code> in <code>src/server/api/trpc.ts</code>:</p>
+          
+          <pre><code><span class="keyword">const</span> timingMiddleware = t.middleware(<span class="keyword">async</span> ({ next, path }) => {
+  <span class="keyword">const</span> start = Date.now();
+  <span class="keyword">if</span> (t._config.isDev) {
+    <span class="comment">// Force random 100ms - 500ms delay in development</span>
+    <span class="keyword">const</span> waitMs = Math.floor(Math.random() * <span class="number">400</span>) + <span class="number">100</span>;
+    <span class="keyword">await new</span> <span class="type">Promise</span>((resolve) => <span class="fn">setTimeout</span>(resolve, waitMs));
+  }
+  <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="fn">next</span>();
+  console.<span class="fn">log</span>(<span class="string">\`[TRPC] \${path} took \${Date.now() - start}ms\`</span>);
+  <span class="keyword">return</span> result;
+});</code></pre>
+
+          <div class="wiki-callout alert-warning">
+            <div class="wiki-callout-title">⚠️ LATENCY MIDDLEWARE IMPACT</div>
+            <p>Every call to a <code>publicProcedure</code> carries a minor artificial delay in dev. If your UI page stutters significantly, check if you are executing queries nested in loops rather than combining requests or using React 19 Suspense.</p>
+          </div>
+
+          <h3>📂 The Directory Map</h3>
+          <ul>
+            <li><code>src/server/api/trpc.ts</code>: Declares the root tRPC init, context generator, timing middleware, and exports procedure macros (e.g. <code>publicProcedure</code>).</li>
+            <li><code>src/server/api/root.ts</code>: Collects sub-routers and combines them into the global <code>appRouter</code>.</li>
+            <li><code>src/server/api/routers/</code>: The feature-specific route implementations. For example, <code>post.ts</code> contains standard query structures.</li>
+            <li><code>src/trpc/react.tsx</code>: Mounts the react-query context and exports the custom client hook <code>api</code>.</li>
+            <li><code>src/trpc/server.ts</code>: Exposes an in-memory direct execution caller for Next.js Server Components.</li>
+          </ul>
+
+          <h3>✍️ Declaring an Endpoint</h3>
+          <p>Adding a new typesafe endpoint is extremely simple:</p>
+          <pre><code><span class="comment">// src/server/api/routers/entries.ts</span>
+<span class="keyword">export const</span> entriesRouter = <span class="fn">createTRPCRouter</span>({
+  getAll: publicProcedure.<span class="fn">query</span>(({ ctx }) => {
+    <span class="keyword">return</span> ctx.db.<span class="fn">select</span>().<span class="fn">from</span>(entries);
+  }),
+});</code></pre>
+        `
+      },
+      ai_integration: {
+        title: "AI Engine & Gemini Integration",
+        subtitle: "Vercel AI SDK wrappers, structured Zod extraction schemas, and behavior tracking strategies.",
+        category: "ai_integration",
+        chip: "Google Gemini AI",
+        color: "var(--pink)",
+        glow: "var(--pink-glow)",
+        nodes: ["node-ai_integration"],
+        paths: ["path-routers-ai"],
+        content: `
+          <p>Introspect uses <strong>Vercel AI SDK v6</strong> paired with <code>@ai-sdk/google</code> to integrate <strong>Google Gemini</strong>. This provides robust text analysis and highly structured JSON object returns.</p>
+
+          <h3>🌟 Structured Habits Extraction</h3>
+          <p>We avoid sending open-ended prompts that require manual regex parse lines. Instead, when a user saves a journal entry, we issue a structured query using <code>generateObject()</code> from the AI SDK:</p>
+
+          <pre><code><span class="keyword">import</span> { generateObject } <span class="keyword">from</span> <span class="string">"ai"</span>;
+<span class="keyword">import</span> { google } <span class="keyword">from</span> <span class="string">"@ai-sdk/google"</span>;
+
+<span class="keyword">const</span> { object } = <span class="keyword">await</span> <span class="fn">generateObject</span>({
+  model: <span class="fn">google</span>(<span class="string">"gemini-1.5-flash"</span>),
+  schema: extractionSchema,
+  prompt: <span class="string">"Analyze: "</span> + userEntryText,
+});</code></pre>
+
+          <h3>📋 Zod Validation Model</h3>
+          <p>Our extraction parser strictly enforces this structured schema at runtime. If Gemini fails to match this shape, Zod rejects the output before any data touches SQLite, preventing corrupt database writes:</p>
+          
+          <pre><code><span class="keyword">const</span> extractionSchema = z.<span class="fn">object</span>({
+  habits: z.<span class="fn">array</span>(
+    z.<span class="fn">object</span>({
+      name: z.<span class="fn">string</span>(),
+      sentiment: z.<span class="fn">enum</span>([<span class="string">"positive"</span>, <span class="string">"negative"</span>, <span class="string">"neutral"</span>])
+    })
+  ),
+  nudge: z.<span class="fn">string</span>()
+});</code></pre>
+
+          <h3>⏱️ Workflow Executions</h3>
+          <ul>
+            <li><strong>Extraction (Entry Save)</strong>: Gemini receives the latest journal content plus the last 5 entries as text context. It returns Zod-validated lists of habits and a 2-minute actionable nudge.</li>
+            <li><strong>Trajectory Insights (Dashboard Load)</strong>: A separate <code>generateText()</code> routine reviews the complete habits database to output a concise 3-sentence summary highlighting positive routines, active negative habits, and overall trajectory.</li>
+          </ul>
+
+          <div class="wiki-callout">
+            <div class="wiki-callout-title">💰 TOKEN & COST RULES</div>
+            <p>1. Capping historical context at 5 entries limits prompt overhead.<br/>
+            2. Hardcoding model temperature to 0.1 ensures predictable, highly focused extractions.<br/>
+            3. Trajectory insight reviews are cached locally in the database and only re-generated if a user adds new journal entries since the last analysis.</p>
+          </div>
+        `
+      },
+      workflows: {
+        title: "Developer Workflows & Gates",
+        subtitle: "Git branching conventions, development setup guides, and the mandatory Mental Model gate.",
+        category: "workflows",
+        chip: "Dev Workflows",
+        color: "var(--amber)",
+        glow: "var(--amber-glow)",
+        nodes: ["node-workflows"],
+        paths: ["path-dev-context"],
+        content: `
+          <p>To ensure high developer efficiency, rapid bug-free integration, and smooth handoffs, we maintain strict branching structures and alignment check gates.</p>
+
+          <h3>🌿 Git Branching Convention</h3>
+          <p>No developers or AI agents may push code changes directly to the <code>main</code> or <code>develop</code> branches. All contributions must use isolated branches and undergo Pull Requests:</p>
+          <ul>
+            <li><code>main</code>: Represents release-ready, fully verified stable code. Merges are made *only* from develop.</li>
+            <li><code>develop</code>: Integration branch. Feature PRs land here.</li>
+            <li><code>feature/phase-X-&lt;name&gt;</code>: Features branched off develop (e.g. <code>feature/phase-2-journal-entry</code>).</li>
+            <li><code>fix/&lt;bug-name&gt;</code>: Rapid remediations targeted directly at develop.</li>
+          </ul>
+
+          <h3>🚪 The Mental Model Gate Protocol</h3>
+          <div class="wiki-callout alert-warning">
+            <div class="wiki-callout-title">⚠️ MANDATORY DEV CHECK</div>
+            <p>Before launching ANY code additions for a new phase or feature cards, the developer (human or AI subagent) MUST read <code>Planning/mental-model.html</code> in full and confirm they can explain the request trace, database schemas, and current stubs vs. complete logic.</p>
+          </div>
+
+          <h3>💻 Essential Console Commands</h3>
+          
+          <p><strong>1. Initial Repository Setup:</strong></p>
+          <pre><code>npm install
+cp .env.example .env <span class="comment"># and fill GOOGLE_GENERATIVE_AI_API_KEY</span></code></pre>
+
+          <p><strong>2. Database Synchronization:</strong></p>
+          <pre><code>npm run db:push <span class="comment"># Sync drizzle schema into local SQLite db.sqlite</span></code></pre>
+
+          <p><strong>3. Dev execution:</strong></p>
+          <pre><code>npm run dev <span class="comment"># Spin up local hot-reloaded local server</span></code></pre>
+
+          <p><strong>4. Production Packaging:</strong></p>
+          <pre><code>npm run build <span class="comment"># Run strict type checking and bundle JS assets</span></code></pre>
+        `
+      }
+    };
+
+    // ─── ACTIVE NODE & PATH SELECTOR ───
+    let currentArticleId = "architecture";
+
+    function selectNode(articleId) {
+      if (!articles[articleId]) return;
+      currentArticleId = articleId;
+
+      // Update Wiki Navigation Active Tab
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.remove("nav-active");
+      });
+      const activeTab = document.getElementById("tab-" + articleId);
+      if (activeTab) activeTab.classList.add("nav-active");
+
+      // Update SVG Node Active State
+      document.querySelectorAll(".node-group").forEach(node => {
+        node.classList.remove("node-active");
+      });
+      
+      // Update SVG Path Highlight Flow
+      document.querySelectorAll(".connector-path").forEach(path => {
+        path.classList.remove("flow-active");
+      });
+
+      const data = articles[articleId];
+      
+      // Highlight associated nodes
+      if (data.nodes) {
+        data.nodes.forEach(nodeId => {
+          const el = document.getElementById(nodeId);
+          if (el) el.classList.add("node-active");
+        });
+      }
+      
+      // Highlight associated paths
+      if (data.paths) {
+        data.paths.forEach(pathId => {
+          const el = document.getElementById(pathId);
+          if (el) el.classList.add("flow-active");
+        });
+      }
+
+      // Transition Content (Fade-Out and Slide-In)
+      const contentContainer = document.getElementById("article-content");
+      contentContainer.classList.add("fade-out");
+      
+      setTimeout(() => {
+        // Build rich HTML output
+        contentContainer.style.setProperty("--accent-color", data.color);
+        contentContainer.style.setProperty("--accent-glow", data.glow);
+        
+        let html = `
+          <span class="article-header-chip">${data.chip}</span>
+          <h2>${data.title}</h2>
+          <p class="article-subtitle">${data.subtitle}</p>
+          <div class="article-divider"></div>
+          <div class="wiki-content">
+            ${data.content}
+          </div>
+        `;
+        
+        contentContainer.innerHTML = html;
+        
+        // Highlight keyword simulations inside code tags
+        highlightCodeSnippets(contentContainer);
+
+        contentContainer.classList.remove("fade-out");
+        
+        // Scroll wiki panel back to top
+        document.getElementById("wiki-scroller").scrollTop = 0;
+      }, 200);
+    }
+
+    // ─── MINI REGEX SYNTAX HIGHLIGHTER ───
+    function highlightCodeSnippets(container) {
+      const codes = container.querySelectorAll("pre code");
+      codes.forEach(code => {
+        let text = code.innerHTML;
+        
+        // Replace syntax characters
+        text = text.replace(/\b(const|let|var|function|return|export|import|from|as|import|select|from|default|export|type|isDev|ZodError)\b/g, '<span class="keyword">$1</span>');
+        text = text.replace(/\b(z|entries|habits|nudges|zodError|timingMiddleware|ctx|db|publicProcedure|createTRPCContext|client|globalForDb|createTRPCRouter|appRouter|AppRouter)\b/g, '<span class="type">$1</span>');
+        text = text.replace(/\b(useQuery|useMutation|mutate|query|createClient|drizzle|middleware|next|queryClient|generateObject|generateText|select|from)\b/g, '<span class="fn">$1</span>');
+        text = text.replace(/("[^"]*"|'[^']*'|`[^`]*`)/g, '<span class="string">$1</span>');
+        text = text.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+        text = text.replace(/(\/\/.*|\/\*[\s\S]*?\*\/|#.*)/g, '<span class="comment">$1</span>');
+        
+        code.innerHTML = text;
+      });
+    }
+
+    // ─── LIVE GLOBAL SEARCH ───
+    const searchInput = document.getElementById("wiki-search");
+    
+    searchInput.addEventListener("input", function(e) {
+      const query = e.target.value.toLowerCase().trim();
+      
+      // If search is cleared, restore active article
+      if (!query) {
+        selectNode(currentArticleId);
+        return;
+      }
+      
+      // Reset node highlights
+      document.querySelectorAll(".node-group").forEach(n => n.classList.remove("node-active"));
+      document.querySelectorAll(".connector-path").forEach(p => p.classList.remove("flow-active"));
+      
+      let matchedArticles = [];
+      let searchBody = "";
+
+      for (const [id, data] of Object.entries(articles)) {
+        const textToSearch = (data.title + " " + data.subtitle + " " + data.content + " " + data.chip).toLowerCase();
+        
+        if (textToSearch.includes(query)) {
+          matchedArticles.push(id);
+          
+          // Highlight nodes matching query
+          data.nodes.forEach(nodeId => {
+            const el = document.getElementById(nodeId);
+            if (el) el.classList.add("node-active");
+          });
+          
+          // Trace path routes
+          data.paths.forEach(pathId => {
+            const el = document.getElementById(pathId);
+            if (el) el.classList.add("flow-hovered");
+          });
+        } else {
+          data.paths.forEach(pathId => {
+            const el = document.getElementById(pathId);
+            if (el) el.classList.remove("flow-hovered");
+          });
+        }
+      }
+
+      // Compile search results view
+      const contentContainer = document.getElementById("article-content");
+      
+      if (matchedArticles.length === 0) {
+        contentContainer.innerHTML = `
+          <div class="no-results">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p>No results found for "<strong>${escapeHtml(query)}</strong>"</p>
+            <p style="font-size: 0.78rem; margin-top: 8px;">Try searching for keywords like "SQLite", "tRPC", "Zod", "latency" or "branching".</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Compile combined results preview
+      let combinedHtml = `
+        <span class="article-header-chip" style="--accent-color: var(--amber); --accent-glow: var(--amber-glow)">Search Engine</span>
+        <h2>Search Results for "${escapeHtml(query)}"</h2>
+        <p class="article-subtitle">Found ${matchedArticles.length} matching sections in the knowledge base.</p>
+        <div class="article-divider"></div>
+      `;
+
+      matchedArticles.forEach(id => {
+        const data = articles[id];
+        // Highlight matched text
+        let snippet = data.subtitle;
+        snippet = highlightText(snippet, query);
+        
+        combinedHtml += `
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 12px; padding: 18px; margin-bottom: 16px; cursor: pointer; transition: transform 0.2s, border-color 0.2s;" 
+               onclick="selectNode('${id}'); document.getElementById('wiki-search').value = '';"
+               onmouseover="this.style.borderColor='var(--primary)';"
+               onmouseout="this.style.borderColor='var(--border-glass)';">
+            <span class="article-header-chip" style="margin-bottom: 6px; font-size: 0.58rem; --accent-color: ${data.color}; --accent-glow: ${data.glow}">${data.chip}</span>
+            <h3 style="margin-top: 4px; font-size: 1rem; color: #fff;">${highlightText(data.title, query)}</h3>
+            <p style="font-size: 0.8rem; color: var(--muted); margin: 6px 0 0 0; line-height: 1.4;">${snippet}</p>
+          </div>
+        `;
+      });
+
+      contentContainer.innerHTML = combinedHtml;
+    });
+
+    // ─── SEARCH HIGHLIGHT UTILS ───
+    function escapeHtml(string) {
+      return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+          '/': '&#x2F;',
+          '=': '&#x3D;',
+          '`': '&#x60;'
+        }[s];
+      });
+    }
+
+    function highlightText(text, keyword) {
+      if (!keyword) return text;
+      const regex = new RegExp(`(${escapeRegExp(keyword)})`, 'gi');
+      return text.replace(regex, '<span class="highlight-match">$1</span>');
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ─── INITIALIZATION ON MOUNT ───
+    window.addEventListener("DOMContentLoaded", () => {
+      selectNode("architecture");
+      
+      // Node Graph Hover Traces
+      document.querySelectorAll(".node-group").forEach(node => {
+        node.addEventListener("mouseenter", () => {
+          const articleId = node.getAttribute("data-article");
+          if (!articleId || !articles[articleId]) return;
+          
+          const data = articles[articleId];
+          if (data.paths) {
+            data.paths.forEach(pathId => {
+              const el = document.getElementById(pathId);
+              if (el && !el.classList.contains("flow-active")) {
+                el.classList.add("flow-hovered");
+              }
+            });
+          }
+        });
+
+        node.addEventListener("mouseleave", () => {
+          document.querySelectorAll(".connector-path").forEach(path => {
+            path.classList.remove("flow-hovered");
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
