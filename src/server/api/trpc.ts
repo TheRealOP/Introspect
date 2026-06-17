@@ -1,9 +1,26 @@
 import { initTRPC, TRPCError } from "@trpc/server";
+import { sql } from "drizzle-orm";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "~/server/auth";
 import { createUserDb } from "~/server/db";
+
+// Columns added after initial launch — safe to run on every cold start
+const SETTINGS_MIGRATIONS = [
+  "ALTER TABLE `introspect_settings` ADD COLUMN `mode` TEXT",
+  "ALTER TABLE `introspect_settings` ADD COLUMN `tier` TEXT",
+];
+
+async function migrateUserDb(db: ReturnType<typeof createUserDb>) {
+  for (const stmt of SETTINGS_MIGRATIONS) {
+    try {
+      await db.run(sql.raw(stmt));
+    } catch {
+      // Column already exists — ignore
+    }
+  }
+}
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth();
@@ -13,6 +30,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   }
 
   const db = createUserDb(session.user.dbUrl, session.user.dbAuthToken);
+  await migrateUserDb(db);
 
   return {
     db,
