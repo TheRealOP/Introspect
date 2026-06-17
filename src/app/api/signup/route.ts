@@ -47,6 +47,8 @@ const USER_DB_INIT_SQL = `
     \`model\` TEXT,
     \`apiKey\` TEXT,
     \`baseUrl\` TEXT,
+    \`mode\` TEXT,
+    \`tier\` TEXT,
     \`updatedAt\` INTEGER
   );
   CREATE TABLE IF NOT EXISTS \`introspect_profile\` (
