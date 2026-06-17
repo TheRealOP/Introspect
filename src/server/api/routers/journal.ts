@@ -1,0 +1,260 @@
+import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
+import { v4 as uuid } from "uuid";
+import { z } from "zod";
+
+import { extractFromEntry } from "~/server/ai/extract";
+import { resolveAi } from "~/server/ai/provider";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import type { UserDb } from "~/server/db";
+import { entries, habitOccurrences, habits, nudges } from "~/server/db/schema";
+
+// ---------------------------------------------------------------------------
+// Shared habit upsert helper — also logs a sighting for streak tracking
+// ---------------------------------------------------------------------------
+async function upsertHabit(
+  db: UserDb,
+  habit: { name: string; sentiment: string },
+  entryId: string | null,
+  seenAt: number | null,
+) {
+  const normalised = habit.name.trim().toLowerCase();
+  const [existing] = await db
+    .select()
+    .from(habits)
+    .where(sql`lower(${habits.name}) = ${normalised}`)
+    .limit(1);
+
+  let habitId: string;
+
+  if (existing) {
+    await db
+      .update(habits)
+      .set({
+        occurrences: (existing.occurrences ?? 1) + 1,
+        sentiment: habit.sentiment,
+        lastSeen: Math.floor(Date.now() / 1000),
+      })
+      .where(eq(habits.id, existing.id));
+    habitId = existing.id;
+  } else {
+    habitId = uuid();
+    await db.insert(habits).values({
+      id: habitId,
+      name: habit.name.trim(),
+      sentiment: habit.sentiment,
+      occurrences: 1,
+      lastSeen: Math.floor(Date.now() / 1000),
+    });
+  }
+
+  // Log the sighting for streak computation
+  await db.insert(habitOccurrences).values({
+    id: uuid(),
+    habitId,
+    entryId,
+    seenAt: seenAt ?? Math.floor(Date.now() / 1000),
+  });
+}
+
+export const journalRouter = createTRPCRouter({
+  // ---------------------------------------------------------------------------
+  // Create a new check-in entry (returns immediately — no AI work here)
+  // ---------------------------------------------------------------------------
+  create: publicProcedure
+    .input(z.object({ content: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const id = uuid();
+      await ctx.db.insert(entries).values({ id, content: input.content });
+      return { id };
+    }),
+
+  // ---------------------------------------------------------------------------
+  // List all entries newest-first
+  // ---------------------------------------------------------------------------
+  list: publicProcedure.query(({ ctx }) => {
+    return ctx.db.select().from(entries).orderBy(desc(entries.createdAt));
+  }),
+
+  // ---------------------------------------------------------------------------
+  // Analyze an entry: run AI, upsert habits, insert 4 nudge options
+  // ---------------------------------------------------------------------------
+  analyze: publicProcedure
+    .input(z.object({ entryId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const [entry] = await ctx.db
+        .select()
+        .from(entries)
+        .where(eq(entries.id, input.entryId))
+        .limit(1);
+
+      if (!entry) throw new Error(`Entry ${input.entryId} not found`);
+
+      const previous = await ctx.db
+        .select()
+        .from(entries)
+        .where(
+          and(
+            ne(entries.id, input.entryId),
+            entry.createdAt !== null
+              ? sql`${entries.createdAt} < ${entry.createdAt}`
+              : undefined,
+          ),
+        )
+        .orderBy(desc(entries.createdAt))
+        .limit(5);
+
+      const pastSelections = await ctx.db
+        .select({ action: nudges.action })
+        .from(nudges)
+        .where(eq(nudges.selected, 1))
+        .orderBy(desc(nudges.createdAt))
+        .limit(10);
+
+      const { model, mode } = await resolveAi(ctx.db);
+
+      const extraction = await extractFromEntry(
+        model,
+        entry.content,
+        [...previous].reverse(),
+        pastSelections.map((s) => s.action),
+        mode,
+      );
+
+      for (const habit of extraction.habits) {
+        await upsertHabit(ctx.db, habit, input.entryId, entry.createdAt);
+      }
+
+      const nudgeRows = extraction.plans.map((action) => ({
+        id: uuid(),
+        entryId: input.entryId,
+        action,
+        selected: 0,
+      }));
+      await ctx.db.insert(nudges).values(nudgeRows);
+
+      return {
+        habits: extraction.habits,
+        plans: nudgeRows.map((r) => ({ id: r.id, action: r.action, selected: false })),
+      };
+    }),
+
+  // ---------------------------------------------------------------------------
+  // Backfill: analyze every entry that doesn't yet have nudges
+  // ---------------------------------------------------------------------------
+  analyzeAll: publicProcedure.mutation(async ({ ctx }) => {
+    const allEntries = await ctx.db
+      .select()
+      .from(entries)
+      .orderBy(asc(entries.createdAt));
+
+    const existingNudges = await ctx.db
+      .select({ entryId: nudges.entryId })
+      .from(nudges);
+    const analyzedIds = new Set(existingNudges.map((n) => n.entryId));
+
+    const pastSelections = await ctx.db
+      .select({ action: nudges.action })
+      .from(nudges)
+      .where(eq(nudges.selected, 1))
+      .orderBy(desc(nudges.createdAt))
+      .limit(10);
+
+    const { model, mode } = await resolveAi(ctx.db);
+
+    let analyzed = 0;
+
+    for (const entry of allEntries) {
+      if (analyzedIds.has(entry.id)) continue;
+
+      const previous = allEntries
+        .filter(
+          (e) =>
+            e.id !== entry.id &&
+            (e.createdAt ?? 0) < (entry.createdAt ?? 0),
+        )
+        .slice(-5);
+
+      const extraction = await extractFromEntry(
+        model,
+        entry.content,
+        previous,
+        pastSelections.map((s) => s.action),
+        mode,
+      );
+
+      for (const habit of extraction.habits) {
+        await upsertHabit(ctx.db, habit, entry.id, entry.createdAt);
+      }
+
+      await ctx.db.insert(nudges).values(
+        extraction.plans.map((action) => ({
+          id: uuid(),
+          entryId: entry.id,
+          action,
+          selected: 0,
+        })),
+      );
+
+      analyzed++;
+    }
+
+    return { analyzed };
+  }),
+
+  // ---------------------------------------------------------------------------
+  // Select an AI-suggested plan + write it to entries.plan
+  // ---------------------------------------------------------------------------
+  selectPlan: publicProcedure
+    .input(z.object({ nudgeId: z.string(), entryId: z.string(), action: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(nudges)
+        .set({ selected: 0 })
+        .where(eq(nudges.entryId, input.entryId));
+
+      await ctx.db
+        .update(nudges)
+        .set({ selected: 1 })
+        .where(eq(nudges.id, input.nudgeId));
+
+      await ctx.db
+        .update(entries)
+        .set({ plan: input.action })
+        .where(eq(entries.id, input.entryId));
+
+      return { ok: true };
+    }),
+
+  // ---------------------------------------------------------------------------
+  // Set a custom (user-written) plan on an entry
+  // ---------------------------------------------------------------------------
+  setPlan: publicProcedure
+    .input(z.object({ entryId: z.string(), plan: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      // Clear any previously selected AI suggestion for this entry
+      await ctx.db
+        .update(nudges)
+        .set({ selected: 0 })
+        .where(eq(nudges.entryId, input.entryId));
+
+      await ctx.db
+        .update(entries)
+        .set({ plan: input.plan })
+        .where(eq(entries.id, input.entryId));
+
+      return { ok: true };
+    }),
+
+  // ---------------------------------------------------------------------------
+  // Fetch all nudge options for a specific entry
+  // ---------------------------------------------------------------------------
+  nudgesByEntry: publicProcedure
+    .input(z.object({ entryId: z.string() }))
+    .query(({ ctx, input }) => {
+      return ctx.db
+        .select()
+        .from(nudges)
+        .where(eq(nudges.entryId, input.entryId))
+        .orderBy(nudges.createdAt);
+    }),
+});

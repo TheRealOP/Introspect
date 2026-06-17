@@ -1,19 +1,18 @@
-import { createClient, type Client } from "@libsql/client";
+import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
-import { env } from "~/env";
 import * as schema from "./schema";
 
-/**
- * Cache the database connection in development. This avoids creating a new connection on every HMR
- * update.
- */
-const globalForDb = globalThis as unknown as {
-  client: Client | undefined;
-};
+// Cache DB connections by URL to avoid reconnecting on every request
+const dbCache = new Map<string, ReturnType<typeof drizzle>>();
 
-export const client =
-  globalForDb.client ?? createClient({ url: env.DATABASE_URL });
-if (env.NODE_ENV !== "production") globalForDb.client = client;
+export function createUserDb(url: string, authToken?: string) {
+  const cached = dbCache.get(url);
+  if (cached) return cached;
+  const client = createClient({ url, authToken: authToken ?? undefined });
+  const db = drizzle(client, { schema });
+  dbCache.set(url, db);
+  return db;
+}
 
-export const db = drizzle(client, { schema });
+export type UserDb = ReturnType<typeof createUserDb>;

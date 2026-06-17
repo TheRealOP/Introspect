@@ -1,8 +1,8 @@
 import { HydrateClient } from "~/trpc/server";
-import { JournalEditor } from "./_components/journal";
-import { Nav } from "./_components/nav";
+import { LogView } from "../_components/log-view";
+import { Nav } from "../_components/nav";
 
-export default function Home() {
+export default function LogPage() {
   return (
     <HydrateClient>
       <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 py-16 text-white">
@@ -10,13 +10,13 @@ export default function Home() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-                Introspect
+                Log
               </h1>
-              <p className="mt-2 text-white/50">Check in. Track what you do. Spot your habits.</p>
+              <p className="mt-2 text-white/50">Every check-in you've logged, newest first.</p>
             </div>
             <Nav />
           </div>
-          <JournalEditor />
+          <LogView />
         </div>
       </main>
     </HydrateClient>

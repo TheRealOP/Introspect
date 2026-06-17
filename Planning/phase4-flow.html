@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introspect — Phase 4 Flow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+
+    h1 { font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    h2 { font-size: 1.1rem; font-weight: 700; color: #f1f5f9; margin-bottom: 14px; margin-top: 36px; }
+
+    .meta { font-size: 0.78rem; color: #64748b; margin-bottom: 40px; }
+
+    .layer-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #475569; margin-bottom: 10px; padding-left: 4px;
+    }
+
+    .row { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+    .section { margin-bottom: 40px; }
+
+    .card {
+      background: #1e2330; border: 1px solid #2d3748; border-radius: 10px;
+      padding: 14px 18px; min-width: 180px; flex: 0 0 auto;
+    }
+    .card.new { border: 1px solid #4a3f1a; background: #1c1a0f; }
+
+    .card.accent-blue   { border-left: 3px solid #3b82f6; }
+    .card.accent-green  { border-left: 3px solid #22c55e; }
+    .card.accent-purple { border-left: 3px solid #a855f7; }
+    .card.accent-amber  { border-left: 3px solid #f59e0b; }
+    .card.accent-red    { border-left: 3px solid #ef4444; }
+    .card.accent-teal   { border-left: 3px solid #14b8a6; }
+    .card.accent-pink   { border-left: 3px solid #ec4899; }
+    .card.accent-sky    { border-left: 3px solid #0ea5e9; }
+    .card.accent-gray   { border-left: 3px solid #6b7280; }
+    .card.accent-orange { border-left: 3px solid #f97316; }
+    .card.accent-lime   { border-left: 3px solid #84cc16; }
+
+    .card-title { font-size: 0.82rem; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .card-sub   { font-size: 0.72rem; color: #94a3b8; line-height: 1.65; }
+
+    .card-sub code, .card-title code {
+      font-family: "JetBrains Mono", "Fira Code", monospace; font-size: 0.68rem;
+      background: #0f1117; border-radius: 3px; padding: 1px 4px; color: #7dd3fc;
+    }
+
+    .tag {
+      display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 1px 6px; border-radius: 4px;
+      margin-right: 4px; margin-top: 4px;
+    }
+    .tag-existing { background: #1e3a5f; color: #7dd3fc; }
+    .tag-new      { background: #2c1a00; color: #fbbf24; }
+    .tag-done     { background: #14532d; color: #86efac; }
+    .tag-future   { background: #2d1f3d; color: #d8b4fe; }
+
+    .arrow-row { display: flex; align-items: center; gap: 0; margin-bottom: 8px; flex-wrap: wrap; }
+    .arrow { display: flex; align-items: center; color: #334155; font-size: 1rem; padding: 0 6px; user-select: none; }
+    .arrow-label { font-size: 0.62rem; color: #475569; padding: 0 4px; }
+
+    .schema-table { border-collapse: collapse; font-size: 0.72rem; width: 100%; margin-top: 8px; }
+    .schema-table th { text-align: left; color: #64748b; font-weight: 600; padding: 4px 10px 4px 0; border-bottom: 1px solid #2d3748; }
+    .schema-table td { padding: 4px 10px 4px 0; color: #94a3b8; vertical-align: top; border-bottom: 1px solid #1e2330; }
+    .schema-table td code { font-family: "JetBrains Mono", monospace; font-size: 0.66rem; color: #7dd3fc; background: #0f1117; border-radius: 3px; padding: 1px 4px; }
+    .pk  { color: #f59e0b !important; font-weight: 700; }
+    .fk  { color: #a78bfa !important; }
+
+    hr { border: none; border-top: 1px solid #1e2330; margin: 32px 0; }
+
+    .env-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+    .env-key { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; color: #fbbf24; min-width: 260px; }
+    .env-key.optional { color: #94a3b8; }
+    .env-val { font-size: 0.7rem; color: #64748b; }
+
+    .phase-list { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .phase-chip { font-size: 0.7rem; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+    .phase-chip.done   { background: #14532d; color: #86efac; }
+    .phase-chip.active { background: #2c1a00; color: #fbbf24; }
+    .phase-chip.future { background: #2d1f3d; color: #d8b4fe; }
+
+    .new-badge {
+      display: inline-block; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase; background: #78350f; color: #fde68a; border-radius: 4px;
+      padding: 1px 5px; margin-left: 6px; vertical-align: middle;
+    }
+
+    .callout {
+      background: #1c1a0f; border: 1px solid #4a3f1a; border-radius: 8px;
+      padding: 12px 16px; font-size: 0.72rem; color: #d4a85a; margin-bottom: 14px;
+      max-width: 780px;
+    }
+    .callout strong { color: #fde68a; }
+
+    .bucket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+    .bucket {
+      background: #1e2330; border: 1px solid #2d3748; border-radius: 8px; padding: 10px 14px;
+    }
+    .bucket-title { font-size: 0.7rem; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+    .bucket-desc  { font-size: 0.66rem; color: #64748b; line-height: 1.5; }
+    .bucket.b1 { border-top: 2px solid #22c55e; }
+    .bucket.b2 { border-top: 2px solid #f59e0b; }
+    .bucket.b3 { border-top: 2px solid #3b82f6; }
+    .bucket.b4 { border-top: 2px solid #ef4444; }
+    .bucket.b5 { border-top: 2px solid #a855f7; }
+
+    .provider-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 10px; }
+    .provider {
+      background: #1e2330; border: 1px solid #2d3748; border-radius: 8px; padding: 10px 14px;
+    }
+    .provider-name { font-size: 0.72rem; font-weight: 700; color: #f1f5f9; margin-bottom: 3px; }
+    .provider-desc { font-size: 0.65rem; color: #64748b; }
+
+    .flow-big {
+      display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+      margin: 14px 0; background: #13161f; border: 1px solid #2d3748; border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .flow-node {
+      background: #1e2330; border: 1px solid #2d3748; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.72rem; color: #f1f5f9; font-weight: 600;
+      white-space: nowrap;
+    }
+    .flow-node.new-node { border-color: #4a3f1a; background: #1c1a0f; color: #fde68a; }
+    .flow-arrow { color: #334155; font-size: 1.1rem; padding: 0 8px; }
+
+    .resolution-box {
+      background: #13161f; border: 1px solid #2d3748; border-radius: 10px;
+      padding: 16px 20px; margin-top: 10px; max-width: 640px;
+    }
+    .resolution-step {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px;
+    }
+    .res-num {
+      background: #1e2330; border: 1px solid #2d3748; border-radius: 50%;
+      width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700; color: #94a3b8; flex-shrink: 0; margin-top: 1px;
+    }
+    .res-text { font-size: 0.72rem; color: #94a3b8; line-height: 1.55; }
+    .res-text strong { color: #f1f5f9; }
+  </style>
+</head>
+<body>
+
+  <h1>Introspect — Phase 4 Flow</h1>
+  <p class="meta">
+    Phase 4: Insights page · AI-agnostic provider layer · Per-habit streaks · Cached AI profile &nbsp;·&nbsp;
+    <span style="color:#fde68a;">★ New additions highlighted in amber</span>
+  </p>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PHASE PROGRESS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Phase Progress</div>
+    <div class="phase-list">
+      <span class="phase-chip done">✓ Phase 1 · Scaffolding</span>
+      <span class="phase-chip done">✓ Phase 2 · Journal Entry (CRUD)</span>
+      <span class="phase-chip done">✓ Phase 3 · Habit extraction + 4-nudge picker</span>
+      <span class="phase-chip active">→ Phase 4 · Insights page + AI-agnostic layer</span>
+      <span class="phase-chip future">Phase 5 · Full Dashboard</span>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       THE BIG PICTURE — what Phase 4 adds
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">What Phase 4 Adds (at a glance)</div>
+    <div class="row">
+      <div class="card accent-orange new" style="min-width:220px;">
+        <div class="card-title">AI-agnostic layer <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          Instead of Groq-only, a provider factory resolves<br/>
+          the model from <strong>DB settings first → env fallback</strong>.<br/>
+          Supports Groq, OpenAI, Anthropic, Google,<br/>
+          and any <strong>OpenAI-compatible URL</strong> (Ollama, etc).
+        </div>
+      </div>
+      <div class="card accent-lime new" style="min-width:220px;">
+        <div class="card-title">Per-habit streaks <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          New <code>habit_occurrences</code> sighting-log table records<br/>
+          each date a habit was seen. Enables current + longest<br/>
+          consecutive-day streak per habit.
+        </div>
+      </div>
+      <div class="card accent-purple new" style="min-width:220px;">
+        <div class="card-title">Cached AI profile <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          AI builds a 5-bucket knowledge graph of the user.<br/>
+          Stored in DB — fast page loads, no AI on every visit.<br/>
+          Manual <strong>Refresh</strong> button regenerates it.
+        </div>
+      </div>
+      <div class="card accent-teal new" style="min-width:220px;">
+        <div class="card-title">Nudge stats <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          Aggregated from existing <code>nudges.selected</code> flag.<br/>
+          Shows which nudges the user acts on most — no schema change.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       END-TO-END REQUEST FLOW
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">End-to-End Request Flow</div>
+
+    <!-- === Journal check-in flow (existing) === -->
+    <h2 style="margin-top:0;">Flow A — Journal check-in (existing, extended) <span class="tag tag-existing">existing</span></h2>
+
+    <div class="flow-big">
+      <div class="flow-node">Browser<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">journal.tsx</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">journal.create<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">tRPC mutation</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">INSERT entries<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">SQLite</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">journal.analyze<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">tRPC mutation</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">getModel(db)<br/><span style="font-weight:400;color:#a78bfa;font-size:0.65rem;">provider.ts ★ new</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">AI provider<br/><span style="font-weight:400;color:#a78bfa;font-size:0.65rem;">Groq/OAI/etc ★</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">upsertHabit()<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">habits + <span style="color:#fde68a;">occurrences ★</span></span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">INSERT nudges<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">4 options</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">Return to UI<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">habits + nudges</span></div>
+    </div>
+
+    <div class="callout">
+      <strong>★ Change in Flow A:</strong> <code>journal.analyze</code> now calls <code>getModel(ctx.db)</code> instead of
+      directly importing a hardcoded Groq instance. The upsertHabit helper also inserts a row into
+      <code>habit_occurrences</code> for every sighting — using the entry's timestamp so backfills stay accurate.
+    </div>
+
+    <!-- === Insights page flow (new) === -->
+    <h2>Flow B — Insights page load <span class="tag tag-new">new</span></h2>
+
+    <div class="flow-big">
+      <div class="flow-node new-node">Browser<br/><span style="font-weight:400;color:#a78bfa;font-size:0.65rem;">/insights ★</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">insights.streaks<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">query</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">GROUP habit_occ<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">streak calc (JS)</span></div>
+      <div class="flow-arrow" style="color:#334155;">+</div>
+      <div class="flow-node new-node">insights.get<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">read cache</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">profile row<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">{ profile, isStale }</span></div>
+      <div class="flow-arrow" style="color:#334155;">+</div>
+      <div class="flow-node new-node">insights.nudgeStats<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">aggregation</span></div>
+    </div>
+
+    <!-- === Refresh flow (new) === -->
+    <h2>Flow C — Refresh insights (manual trigger) <span class="tag tag-new">new</span></h2>
+
+    <div class="flow-big">
+      <div class="flow-node new-node">Refresh button<br/><span style="font-weight:400;color:#a78bfa;font-size:0.65rem;">insights.tsx ★</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">insights.refresh<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">tRPC mutation</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">Gather data<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">habits + streaks + entries + nudgeStats</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">getModel(db)<br/><span style="font-weight:400;color:#a78bfa;font-size:0.65rem;">provider.ts ★</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">buildInsights()<br/><span style="font-weight:400;color:#a78bfa;font-size:0.65rem;">insights.ts ★</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node new-node">UPSERT profile<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">singleton row</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">Return fresh<br/><span style="font-weight:400;color:#64748b;font-size:0.65rem;">profile + 5 buckets</span></div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       AI PROVIDER RESOLUTION
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">AI Provider Resolution — <code>src/server/ai/provider.ts</code> <span class="new-badge">new</span></div>
+
+    <div class="callout">
+      <strong>Design goal:</strong> anyone with any AI subscription can use Introspect. Self-hosters
+      set their own env vars. Hosted users pay for ours. A DB settings row overrides env —
+      so a user who pastes their own key in the UI gets their model, everyone else falls through to
+      the server's env default (currently Groq). No change to any AI behavior — just where the
+      model comes from.
+    </div>
+
+    <div class="resolution-box">
+      <div class="layer-label" style="margin-bottom:12px;">Resolution order — getAiConfig(db)</div>
+      <div class="resolution-step">
+        <div class="res-num">1</div>
+        <div class="res-text"><strong>DB settings row</strong> (<code>introspect_settings</code> singleton, id = "default")<br/>
+          If <code>provider</code>, <code>model</code>, <code>apiKey</code> are all set → use these. Allows in-app key entry.</div>
+      </div>
+      <div class="resolution-step">
+        <div class="res-num">2</div>
+        <div class="res-text"><strong>Env variables</strong> — <code>AI_PROVIDER</code> / <code>AI_MODEL</code> / per-provider key<br/>
+          Fallback when no DB row exists. Used by hosted version and developers.</div>
+      </div>
+      <div class="resolution-step">
+        <div class="res-num">3</div>
+        <div class="res-text"><strong>Hard default</strong> — Groq + <code>llama-3.3-70b-versatile</code><br/>
+          Preserves existing Phase 3 behavior if nothing else is configured.</div>
+      </div>
+    </div>
+
+    <div class="layer-label" style="margin-top:20px;">Supported providers</div>
+    <div class="provider-grid">
+      <div class="provider">
+        <div class="provider-name">Groq</div>
+        <div class="provider-desc"><code>@ai-sdk/groq</code><br/>Default. Key: <code>GROQ_API_KEY</code></div>
+      </div>
+      <div class="provider">
+        <div class="provider-name">OpenAI</div>
+        <div class="provider-desc"><code>@ai-sdk/openai</code><br/>Key: <code>OPENAI_API_KEY</code></div>
+      </div>
+      <div class="provider">
+        <div class="provider-name">Anthropic</div>
+        <div class="provider-desc"><code>@ai-sdk/anthropic</code><br/>Key: <code>ANTHROPIC_API_KEY</code></div>
+      </div>
+      <div class="provider">
+        <div class="provider-name">Google</div>
+        <div class="provider-desc"><code>@ai-sdk/google</code><br/>Key: <code>GOOGLE_GENERATIVE_AI_API_KEY</code></div>
+      </div>
+      <div class="provider" style="border-color:#4a3f1a; background:#1c1a0f;">
+        <div class="provider-name" style="color:#fde68a;">Custom / OpenAI-compat</div>
+        <div class="provider-desc">Ollama, OpenRouter, LM Studio, any self-hosted endpoint.<br/>Set <code>AI_BASE_URL</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       AI PROFILE — 5 BUCKETS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">AI Profile — 5 Buckets <span class="new-badge">new</span> — <code>src/server/ai/insights.ts</code></div>
+
+    <div class="callout">
+      Built by <code>buildInsights(db, habits, recentEntries, nudgeStats)</code>.
+      Uses same tool-calling pattern as <code>extract.ts</code>.
+      Cached in <code>introspect_profile</code> singleton — <strong>not regenerated on every page load</strong>.
+      User manually triggers refresh; UI shows a "stale" indicator when new entries arrived since last build.
+    </div>
+
+    <div class="bucket-grid">
+      <div class="bucket b1">
+        <div class="bucket-title">🟢 Aware</div>
+        <div class="bucket-desc">Habits the user <em>explicitly names</em> in their check-ins. They know about these.</div>
+      </div>
+      <div class="bucket b2">
+        <div class="bucket-title">🟡 Unaware</div>
+        <div class="bucket-desc">Recurring <em>patterns across entries</em> the user never called out by name. Hidden habits the AI surfaces.</div>
+      </div>
+      <div class="bucket b3">
+        <div class="bucket-title">🔵 Want to Build</div>
+        <div class="bucket-desc">Inferred from positive sentiment + stated intent in entries. Things they're trying to do more of.</div>
+      </div>
+      <div class="bucket b4">
+        <div class="bucket-title">🔴 Want to Remove</div>
+        <div class="bucket-desc">Inferred from negative sentiment + self-criticism. Habits they want gone.</div>
+      </div>
+      <div class="bucket b5">
+        <div class="bucket-title">🟣 Suggestions</div>
+        <div class="bucket-desc">Small complementary habits the AI proposes based on what it sees working. Not from the data — forward-looking.</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <div class="card accent-gray" style="max-width:440px;">
+        <div class="card-title">+ nudgePreference</div>
+        <div class="card-sub">
+          A short note on what kinds of nudges this user actually picks — derived from
+          their <code>selected=1</code> nudge history. e.g. "Prefers sensory-reset nudges; rarely picks
+          pattern-tied ones." Feeds back into future <code>extractFromEntry</code> calls.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       DATABASE CHANGES
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Database — New Tables in <code>src/server/db/schema.ts</code></div>
+
+    <div class="row">
+      <div class="card accent-amber new" style="min-width:360px;">
+        <div class="card-title"><code>introspect_settings</code> <span class="new-badge">new</span></div>
+        <div class="card-sub">Singleton row (id = "default"). Stores user's AI provider config.<br/>
+          Keys stored in local SQLite for self-host/dev; prefer env for hosted prod.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key — "default"</td></tr>
+          <tr><td><code>provider</code></td><td>TEXT</td><td>groq | openai | anthropic | google | custom</td></tr>
+          <tr><td><code>model</code></td><td>TEXT</td><td>e.g. "llama-3.3-70b-versatile"</td></tr>
+          <tr><td><code>apiKey</code></td><td>TEXT</td><td>user's key (nullable)</td></tr>
+          <tr><td><code>baseUrl</code></td><td>TEXT</td><td>OpenAI-compat endpoint URL (nullable)</td></tr>
+          <tr><td><code>updatedAt</code></td><td>INTEGER</td><td>unix timestamp</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-lime new" style="min-width:360px;">
+        <div class="card-title"><code>introspect_habit_occurrences</code> <span class="new-badge">new</span></div>
+        <div class="card-sub">One row per habit sighting per entry. Powers per-habit streak computation.
+          Written by the extended <code>upsertHabit()</code> helper in <code>journal.ts</code>.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
+          <tr><td class="fk"><code>habitId</code></td><td>TEXT</td><td>NOT NULL → habits.id</td></tr>
+          <tr><td class="fk"><code>entryId</code></td><td>TEXT</td><td>→ entries.id (nullable)</td></tr>
+          <tr><td><code>seenAt</code></td><td>INTEGER</td><td>unix timestamp — uses entry.createdAt for backfill accuracy</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-purple new" style="min-width:360px;">
+        <div class="card-title"><code>introspect_profile</code> <span class="new-badge">new</span></div>
+        <div class="card-sub">Singleton row (id = "default"). Cached AI profile — 5 buckets as JSON string arrays.
+          <code>entryCount</code> at last build enables staleness check.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key — "default"</td></tr>
+          <tr><td><code>summary</code></td><td>TEXT</td><td>3-sentence executive brief</td></tr>
+          <tr><td><code>aware</code></td><td>TEXT</td><td>JSON string[] — habits user knows about</td></tr>
+          <tr><td><code>unaware</code></td><td>TEXT</td><td>JSON string[] — hidden patterns</td></tr>
+          <tr><td><code>wantToBuild</code></td><td>TEXT</td><td>JSON string[]</td></tr>
+          <tr><td><code>wantToRemove</code></td><td>TEXT</td><td>JSON string[]</td></tr>
+          <tr><td><code>suggestions</code></td><td>TEXT</td><td>JSON string[] — forward-looking suggestions</td></tr>
+          <tr><td><code>nudgePreference</code></td><td>TEXT</td><td>short prose note on nudge style</td></tr>
+          <tr><td><code>entryCount</code></td><td>INTEGER</td><td>entry count at last build (staleness)</td></tr>
+          <tr><td><code>updatedAt</code></td><td>INTEGER</td><td>unix timestamp</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="layer-label" style="margin-top: 24px;">Existing tables (unchanged)</div>
+    <div class="row">
+      <div class="card accent-green" style="min-width:200px;">
+        <div class="card-title"><code>introspect_entries</code> <span class="tag tag-existing">existing</span></div>
+        <div class="card-sub">id · content · createdAt<br/>No changes.</div>
+      </div>
+      <div class="card accent-green" style="min-width:200px;">
+        <div class="card-title"><code>introspect_habits</code> <span class="tag tag-existing">existing</span></div>
+        <div class="card-sub">id · name · sentiment · occurrences · lastSeen<br/>No column changes. <code>upsertHabit</code> now also writes to <code>habit_occurrences</code>.</div>
+      </div>
+      <div class="card accent-green" style="min-width:200px;">
+        <div class="card-title"><code>introspect_nudges</code> <span class="tag tag-existing">existing</span></div>
+        <div class="card-sub">id · entryId · action · selected · createdAt<br/>No changes. Stats aggregated from <code>selected=1</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       ROUTERS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">tRPC Routers — <code>src/server/api/root.ts</code></div>
+    <div class="row">
+      <div class="card accent-purple" style="min-width:280px;">
+        <div class="card-title">journal router <span class="tag tag-existing">existing · extended</span></div>
+        <div class="card-sub">
+          <b>create</b> / <b>list</b> / <b>analyzeAll</b> / <b>selectNudge</b> / <b>nudgesByEntry</b> — unchanged<br/>
+          <b>analyze</b> — now calls <code>getModel(ctx.db)</code> instead of hardcoded Groq;<br/>
+          <code>upsertHabit</code> now inserts into <code>habit_occurrences</code>
+        </div>
+      </div>
+      <div class="card accent-purple" style="min-width:180px;">
+        <div class="card-title">habits router <span class="tag tag-existing">existing</span></div>
+        <div class="card-sub"><b>list</b>() — unchanged</div>
+      </div>
+      <div class="card accent-orange new" style="min-width:300px;">
+        <div class="card-title">insights router <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          <b>streaks</b>() → per-habit current + longest streak (pure JS from habit_occurrences)<br/>
+          <b>nudgeStats</b>() → totals, pick rate, top picked actions<br/>
+          <b>get</b>() → <code>{ profile, isStale }</code> from cached profile row<br/>
+          <b>refresh</b>() → calls buildInsights(), upserts profile singleton
+        </div>
+      </div>
+      <div class="card accent-teal new" style="min-width:240px;">
+        <div class="card-title">settings router <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          <b>get</b>() → read settings row (masks apiKey)<br/>
+          <b>update</b>({ provider, model, apiKey?, baseUrl? }) → upsert singleton
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       FRONTEND — Insights page
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Frontend — Insights page <span class="new-badge">new</span></div>
+
+    <div class="row">
+      <div class="card accent-blue new" style="min-width:280px;">
+        <div class="card-title"><code>src/app/insights/page.tsx</code></div>
+        <div class="card-sub">
+          Server component (RSC shell).<br/>
+          Same gradient background as <code>page.tsx</code>.<br/>
+          Wraps <code>&lt;HydrateClient&gt;</code> + <code>&lt;InsightsView /&gt;</code>.<br/>
+          Has "← Check in" nav link back to <code>/</code>.
+        </div>
+      </div>
+      <div class="card accent-blue new" style="min-width:420px;">
+        <div class="card-title"><code>src/app/_components/insights.tsx</code></div>
+        <div class="card-sub">
+          Client component (<code>"use client"</code>). Sections in order:<br/>
+          <br/>
+          <b>1. Habit streaks</b> — cards with sentiment dot + current streak + longest streak.<br/>
+          <b>2. Nudge stats</b> — "nudges you actually act on" list + pick rate.<br/>
+          <b>3. AI profile</b> — 5 buckets rendered; "Refresh insights" button (amber highlight when stale).<br/>
+          &nbsp;&nbsp;&nbsp;Empty state → prompt "Build your profile" button.<br/>
+          <b>4. Settings</b> — provider/model picker + optional key/baseURL; saves via <code>settings.update</code>.
+        </div>
+      </div>
+      <div class="card accent-blue" style="min-width:200px;">
+        <div class="card-title"><code>src/app/page.tsx</code> <span class="tag tag-existing">existing · +nav</span></div>
+        <div class="card-sub">Add "Insights →" link to the page header pointing to <code>/insights</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       AI FILES
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">AI Files — <code>src/server/ai/</code></div>
+    <div class="row">
+      <div class="card accent-pink" style="min-width:280px;">
+        <div class="card-title"><code>extract.ts</code> <span class="tag tag-existing">existing · refactored</span></div>
+        <div class="card-sub">
+          Drop module-level <code>createGroq</code> / <code>GROQ_MODEL</code>.<br/>
+          <code>extractFromEntry</code> now accepts a pre-resolved <code>model</code> param<br/>
+          (or <code>db</code> and calls <code>getModel(db)</code> internally).<br/>
+          Everything else — schema, tool call, prompt — unchanged.
+        </div>
+      </div>
+      <div class="card accent-orange new" style="min-width:280px;">
+        <div class="card-title"><code>provider.ts</code> <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          <code>getAiConfig(db)</code> — reads settings row → env → default.<br/>
+          <code>getModel(db)</code> — switch on provider, returns a <code>LanguageModel</code>.<br/>
+          Handles: groq / openai / anthropic / google / custom (OAI-compat baseURL).
+        </div>
+      </div>
+      <div class="card accent-pink new" style="min-width:280px;">
+        <div class="card-title"><code>insights.ts</code> <span class="new-badge">new</span></div>
+        <div class="card-sub">
+          <code>insightsSchema</code> (zod) — { summary, aware[], unaware[], wantToBuild[], wantToRemove[], suggestions[], nudgePreference }.<br/>
+          <code>buildInsights(model, habits, recentEntries, nudgeStats)</code><br/>
+          Same tool-calling pattern as <code>extract.ts</code>. temp: 0.2.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       ENV & CONFIG
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">Env &amp; Config — <code>src/env.js</code></div>
+    <div class="env-row"><span class="env-key">DATABASE_URL</span><span class="env-val">file:./db.sqlite (unchanged)</span></div>
+    <div class="env-row"><span class="env-key">GROQ_API_KEY</span><span class="env-val">existing — now optional (falls back to DB settings)</span></div>
+    <div class="env-row"><span class="env-key optional">AI_PROVIDER</span><span class="env-val">optional — groq | openai | anthropic | google | custom</span></div>
+    <div class="env-row"><span class="env-key optional">AI_MODEL</span><span class="env-val">optional — model ID string, e.g. "gpt-4o-mini"</span></div>
+    <div class="env-row"><span class="env-key optional">AI_BASE_URL</span><span class="env-val">optional — custom OpenAI-compatible endpoint URL</span></div>
+    <div class="env-row"><span class="env-key optional">OPENAI_API_KEY</span><span class="env-val">optional</span></div>
+    <div class="env-row"><span class="env-key optional">ANTHROPIC_API_KEY</span><span class="env-val">optional</span></div>
+    <div class="env-row"><span class="env-key optional">GOOGLE_GENERATIVE_AI_API_KEY</span><span class="env-val">optional</span></div>
+  </div>
+
+  <hr />
+
+  <!-- ═══════════════════════════════════════════════════════
+       FILE MAP (updated)
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="layer-label">File Map — Phase 4 state</div>
+    <div class="row">
+      <div class="card accent-sky" style="min-width:560px;">
+        <div class="card-sub" style="line-height: 2.1;">
+          <code>src/app/page.tsx</code> &nbsp;—&nbsp; check-in page shell + "Insights →" nav <span class="tag tag-existing">+nav</span><br/>
+          <code>src/app/insights/page.tsx</code> &nbsp;—&nbsp; insights page RSC shell <span class="tag tag-new">new</span><br/>
+          <code>src/app/_components/journal.tsx</code> &nbsp;—&nbsp; existing check-in UI <span class="tag tag-existing">unchanged</span><br/>
+          <code>src/app/_components/insights.tsx</code> &nbsp;—&nbsp; streaks + nudge stats + AI profile + settings UI <span class="tag tag-new">new</span><br/>
+          <code>src/server/ai/extract.ts</code> &nbsp;—&nbsp; habit extraction (refactored to use provider.ts) <span class="tag tag-existing">refactored</span><br/>
+          <code>src/server/ai/provider.ts</code> &nbsp;—&nbsp; AI provider factory (DB → env → default) <span class="tag tag-new">new</span><br/>
+          <code>src/server/ai/insights.ts</code> &nbsp;—&nbsp; buildInsights() — 5-bucket AI profile builder <span class="tag tag-new">new</span><br/>
+          <code>src/server/api/root.ts</code> &nbsp;—&nbsp; registers insights + settings routers <span class="tag tag-existing">+2 routers</span><br/>
+          <code>src/server/api/routers/journal.ts</code> &nbsp;—&nbsp; analyze() + upsertHabit() extended <span class="tag tag-existing">extended</span><br/>
+          <code>src/server/api/routers/habits.ts</code> &nbsp;—&nbsp; unchanged <span class="tag tag-existing">unchanged</span><br/>
+          <code>src/server/api/routers/insights.ts</code> &nbsp;—&nbsp; streaks · nudgeStats · get · refresh <span class="tag tag-new">new</span><br/>
+          <code>src/server/api/routers/settings.ts</code> &nbsp;—&nbsp; get · update <span class="tag tag-new">new</span><br/>
+          <code>src/server/db/schema.ts</code> &nbsp;—&nbsp; +3 tables: settings · habit_occurrences · profile <span class="tag tag-existing">+3 tables</span><br/>
+          <code>src/env.js</code> &nbsp;—&nbsp; GROQ_API_KEY now optional + 4 new optional AI env vars <span class="tag tag-existing">updated</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

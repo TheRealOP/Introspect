@@ -7,11 +7,30 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.string().optional(), // used only by drizzle.config.ts for db:push
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
+    // Auth
+    AUTH_SECRET: z.string().min(1),
+    // Central users database (Turso or local file)
+    USERS_DATABASE_URL: z.string().min(1),
+    USERS_DATABASE_AUTH_TOKEN: z.string().optional(),
+    // Turso Platform API — for provisioning per-user databases
+    TURSO_API_TOKEN: z.string().optional(),
+    TURSO_ORGANIZATION: z.string().optional(),
+    // AI providers
+    GROQ_API_KEY: z.string().min(1).optional(),
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+    AI_PROVIDER: z.string().optional(),
+    AI_MODEL: z.string().optional(),
+    AI_BASE_URL: z.string().optional(),
+    // Email (Resend)
+    RESEND_API_KEY: z.string().optional(),
+    EMAIL_FROM: z.string().optional(),
+    AUTH_URL: z.string().optional(),
   },
 
   /**
@@ -30,8 +49,21 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
+    AUTH_SECRET: process.env.AUTH_SECRET,
+    USERS_DATABASE_URL: process.env.USERS_DATABASE_URL,
+    USERS_DATABASE_AUTH_TOKEN: process.env.USERS_DATABASE_AUTH_TOKEN,
+    TURSO_API_TOKEN: process.env.TURSO_API_TOKEN,
+    TURSO_ORGANIZATION: process.env.TURSO_ORGANIZATION,
+    GROQ_API_KEY: process.env.GROQ_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+    AI_PROVIDER: process.env.AI_PROVIDER,
+    AI_MODEL: process.env.AI_MODEL,
+    AI_BASE_URL: process.env.AI_BASE_URL,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
+    AUTH_URL: process.env.AUTH_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
