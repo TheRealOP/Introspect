@@ -30,6 +30,7 @@ export const env = createEnv({
     // Email (Resend)
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
+    FEEDBACK_TO: z.string().optional(),
     AUTH_URL: z.string().optional(),
   },
 
@@ -63,6 +64,7 @@ export const env = createEnv({
     AI_BASE_URL: process.env.AI_BASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
+    FEEDBACK_TO: process.env.FEEDBACK_TO,
     AUTH_URL: process.env.AUTH_URL,
   },
   /**

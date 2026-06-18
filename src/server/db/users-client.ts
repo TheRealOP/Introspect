@@ -21,6 +21,19 @@ export async function initUsersDb() {
     )
   `);
 
+  // Create feedback table — central store across all users
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id TEXT PRIMARY KEY NOT NULL,
+      message TEXT NOT NULL,
+      email TEXT,
+      category TEXT,
+      userId TEXT,
+      userAgent TEXT,
+      createdAt INTEGER DEFAULT (unixepoch())
+    )
+  `);
+
   // Migrate existing DBs that don't have emailVerified column yet
   try {
     await client.execute("ALTER TABLE users ADD COLUMN emailVerified INTEGER");
@@ -122,4 +135,51 @@ export async function markEmailVerified(email: string): Promise<void> {
     sql: "UPDATE users SET emailVerified = unixepoch() WHERE lower(email) = lower(?1)",
     args: [email],
   });
+}
+
+export async function createFeedback(data: {
+  message: string;
+  email?: string;
+  category?: string;
+  userId?: string;
+  userAgent?: string;
+}): Promise<void> {
+  await initUsersDb();
+  const id = crypto.randomUUID();
+  await client.execute({
+    sql: "INSERT INTO feedback (id, message, email, category, userId, userAgent) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+    args: [
+      id,
+      data.message,
+      data.email ?? null,
+      data.category ?? null,
+      data.userId ?? null,
+      data.userAgent ?? null,
+    ],
+  });
+}
+
+export async function listFeedback(): Promise<
+  {
+    id: string;
+    message: string;
+    email: string | null;
+    category: string | null;
+    userId: string | null;
+    userAgent: string | null;
+    createdAt: number;
+  }[]
+> {
+  const result = await client.execute(
+    "SELECT * FROM feedback ORDER BY createdAt DESC",
+  );
+  return result.rows.map((row) => ({
+    id: row.id as string,
+    message: row.message as string,
+    email: row.email as string | null,
+    category: row.category as string | null,
+    userId: row.userId as string | null,
+    userAgent: row.userAgent as string | null,
+    createdAt: row.createdAt as number,
+  }));
 }

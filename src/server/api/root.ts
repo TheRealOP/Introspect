@@ -1,3 +1,4 @@
+import { feedbackRouter } from "~/server/api/routers/feedback";
 import { habitsRouter } from "~/server/api/routers/habits";
 import { insightsRouter } from "~/server/api/routers/insights";
 import { journalRouter } from "~/server/api/routers/journal";
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
   insights: insightsRouter,
   settings: settingsRouter,
   wiki: wikiRouter,
+  feedback: feedbackRouter,
 });
 
 // export type definition of API
