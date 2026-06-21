@@ -9,7 +9,11 @@ import { TRPCReactProvider } from "~/trpc/react";
 export const metadata: Metadata = {
   title: "Introspect",
   description: "Check in. Track what you do. Spot your habits.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [
+    { rel: "icon", url: "/favicon.ico" },
+    { rel: "apple-touch-icon", url: "/apple-touch-icon.png" },
+  ],
+  manifest: "/manifest.webmanifest",
 };
 
 const geist = Geist({

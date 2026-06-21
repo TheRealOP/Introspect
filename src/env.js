@@ -30,7 +30,14 @@ export const env = createEnv({
     // Email (Resend)
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
+    FEEDBACK_TO: z.string().optional(),
     AUTH_URL: z.string().optional(),
+    // Web Push / VAPID
+    VAPID_PUBLIC_KEY: z.string().min(1),
+    VAPID_PRIVATE_KEY: z.string().min(1),
+    VAPID_SUBJECT: z.string().min(1),
+    // Cron endpoint guard
+    CRON_SECRET: z.string().min(1),
   },
 
   /**
@@ -39,7 +46,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1),
   },
 
   /**
@@ -63,7 +70,13 @@ export const env = createEnv({
     AI_BASE_URL: process.env.AI_BASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
+    FEEDBACK_TO: process.env.FEEDBACK_TO,
     AUTH_URL: process.env.AUTH_URL,
+    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+    VAPID_SUBJECT: process.env.VAPID_SUBJECT,
+    CRON_SECRET: process.env.CRON_SECRET,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

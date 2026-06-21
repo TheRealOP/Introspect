@@ -82,3 +82,22 @@ export const chatMessages = createTable("chat_messages", (d) => ({
   content: d.text().notNull(),
   createdAt: d.integer().default(sql`(unixepoch())`),
 }));
+
+// Web Push — one row per subscribed device
+export const pushSubscriptions = createTable("push_subscriptions", (d) => ({
+  id: d.text().primaryKey(),
+  endpoint: d.text().notNull(), // unique per device
+  p256dh: d.text().notNull(),
+  auth: d.text().notNull(),
+  userAgent: d.text(),
+  createdAt: d.integer().default(sql`(unixepoch())`),
+}));
+
+// Singleton (id = "default") — reminder preferences + last-notified dedupe
+export const reminders = createTable("reminders", (d) => ({
+  id: d.text().primaryKey(),
+  enabled: d.integer().default(0), // 1 when reminders are on
+  intervalHours: d.integer().default(3),
+  lastNotifiedAt: d.integer(),
+  updatedAt: d.integer(),
+}));

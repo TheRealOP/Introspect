@@ -10,6 +10,7 @@ const links = [
   { href: "/insights", label: "Insights" },
   { href: "/chat", label: "Reflect" },
   { href: "/settings", label: "Settings" },
+  { href: "/feedback", label: "Feedback" },
 ];
 
 export function Nav() {

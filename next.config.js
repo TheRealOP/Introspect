@@ -12,6 +12,7 @@ const config = {
     "@libsql/hrana-client",
     "@libsql/isomorphic-fetch",
     "@libsql/isomorphic-ws",
+    "web-push",
   ],
 };
 

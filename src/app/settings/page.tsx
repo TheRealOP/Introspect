@@ -1,6 +1,7 @@
 import { HydrateClient } from "~/trpc/server";
 import { AiSettings } from "../_components/ai-settings";
 import { Nav } from "../_components/nav";
+import { ReminderSettings } from "../_components/reminder-settings";
 
 export default function SettingsPage() {
   return (
@@ -18,6 +19,20 @@ export default function SettingsPage() {
             </div>
             <Nav />
           </div>
+
+          {/* ── Reminders section ── */}
+          <section className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-white/40">
+                Reminders
+              </h2>
+              <p className="mt-1 text-sm text-white/30">
+                Get a push notification when it&apos;s time to check in — even
+                when the app is closed.
+              </p>
+            </div>
+            <ReminderSettings />
+          </section>
 
           {/* ── AI & Data section ── */}
           <section className="flex flex-col gap-4">
