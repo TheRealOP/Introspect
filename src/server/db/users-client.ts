@@ -159,6 +159,19 @@ export async function createFeedback(data: {
   });
 }
 
+export async function listUsers(): Promise<
+  { id: string; dbUrl: string; dbAuthToken: string }[]
+> {
+  const result = await client.execute(
+    "SELECT id, dbUrl, dbAuthToken FROM users",
+  );
+  return result.rows.map((row) => ({
+    id: row.id as string,
+    dbUrl: row.dbUrl as string,
+    dbAuthToken: row.dbAuthToken as string,
+  }));
+}
+
 export async function listFeedback(): Promise<
   {
     id: string;
