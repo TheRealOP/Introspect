@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 
 import { auth } from "~/server/auth";
 import { createUserDb } from "~/server/db";
+import { ensureUserTables } from "~/server/db/ensure-tables";
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth();
@@ -13,6 +14,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   }
 
   const db = createUserDb(session.user.dbUrl, session.user.dbAuthToken);
+  await ensureUserTables(db);
 
   return {
     db,

@@ -78,6 +78,21 @@ const USER_DB_INIT_SQL = `
     \`content\` TEXT NOT NULL,
     \`createdAt\` INTEGER DEFAULT (unixepoch())
   );
+  CREATE TABLE IF NOT EXISTS \`introspect_push_subscriptions\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`endpoint\` TEXT NOT NULL,
+    \`p256dh\` TEXT NOT NULL,
+    \`auth\` TEXT NOT NULL,
+    \`userAgent\` TEXT,
+    \`createdAt\` INTEGER DEFAULT (unixepoch())
+  );
+  CREATE TABLE IF NOT EXISTS \`introspect_reminders\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`enabled\` INTEGER DEFAULT 0,
+    \`intervalHours\` INTEGER DEFAULT 3,
+    \`lastNotifiedAt\` INTEGER,
+    \`updatedAt\` INTEGER
+  );
 `;
 
 export async function POST(req: Request) {

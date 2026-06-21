@@ -4,43 +4,12 @@ import { NextResponse } from "next/server";
 import { env } from "~/env";
 import { sendPush } from "~/server/push";
 import { createUserDb } from "~/server/db";
+import { ensureUserTables } from "~/server/db/ensure-tables";
 import { listUsers } from "~/server/db/users-client";
 import { entries, pushSubscriptions, reminders } from "~/server/db/schema";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-// Lazily ensure the push/reminders tables exist in a user DB.
-// Mirrors initUsersDb() in users-client.ts — uses raw SQL via the underlying
-// libsql client so we don't need drizzle migrations on every user's DB.
-async function ensureReminderTables(db: ReturnType<typeof createUserDb>) {
-  // Access the underlying libsql client through drizzle's internal reference
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawClient = (db as any).$client as {
-    execute: (sql: string) => Promise<unknown>;
-  };
-
-  await rawClient.execute(`
-    CREATE TABLE IF NOT EXISTS introspect_push_subscriptions (
-      id TEXT PRIMARY KEY NOT NULL,
-      endpoint TEXT NOT NULL,
-      p256dh TEXT NOT NULL,
-      auth TEXT NOT NULL,
-      userAgent TEXT,
-      createdAt INTEGER DEFAULT (unixepoch())
-    )
-  `);
-
-  await rawClient.execute(`
-    CREATE TABLE IF NOT EXISTS introspect_reminders (
-      id TEXT PRIMARY KEY NOT NULL,
-      enabled INTEGER DEFAULT 0,
-      intervalHours INTEGER DEFAULT 3,
-      lastNotifiedAt INTEGER,
-      updatedAt INTEGER
-    )
-  `);
-}
 
 export async function GET(request: Request) {
   // Guard: require ?secret= matching CRON_SECRET
@@ -62,7 +31,7 @@ export async function GET(request: Request) {
   for (const user of users) {
     try {
       const db = createUserDb(user.dbUrl, user.dbAuthToken);
-      await ensureReminderTables(db);
+      await ensureUserTables(db);
 
       // Read reminder settings
       const [reminderRow] = await db
