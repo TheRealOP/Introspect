@@ -52,20 +52,21 @@ If you prefer reading plain Markdown files, they are structured as follows:
 * Full request lifecycle tracing from the user's browser down to SQLite.
 
 ### 2. [Database Schema & Drizzle ORM](file:///Users/ojaspolakhare/Documents/GitHub/Introspect/Planning/knowledge_base/database.md)
-* Setup details for SQLite and the local `@libsql/client` driver.
-* Detailed analysis of the 3 database tables (`entries`, `habits`, `nudges`), column types, defaults, and relationships.
-* Drizzle Kit migration and sync workflows.
+* Two-database model: central users DB + per-user Turso DB (auto-provisioned at signup).
+* Complete schema: 11 application tables (entries, habits, nudges, habitOccurrences, settings, profile, wikiPages, wikiEdges, chatMessages, pushSubscriptions, reminders).
+* Drizzle ORM configuration and column-by-column breakdown.
 
 ### 3. [tRPC 11 API Layer](file:///Users/ojaspolakhare/Documents/GitHub/Introspect/Planning/knowledge_base/api.md)
 * How tRPC connects Client and Server with total typesafety.
 * Custom Context creation (`createTRPCContext`) injecting the Drizzle client.
 * Latency Simulation: How our dev-only `timingMiddleware` automatically inserts a random `100ms - 500ms` delay to identify network waterfalls.
 
-### 4. [AI Engine & Gemini Integration](file:///Users/ojaspolakhare/Documents/GitHub/Introspect/Planning/knowledge_base/ai_integration.md)
-* Vercel AI SDK (`ai` v6) configuration using `@ai-sdk/google`.
-* **Workflow 1 (Habit Extraction)**: Using `generateObject()` with Zod schema validation to run structured extraction upon entry creation.
-* **Workflow 2 (Behavioral Insights)**: Using `generateText()` to analyze long-term patterns for dashboard visual feedback.
-* Prompt patterns and cost-reduction strategies.
+### 4. [AI Engine & Multi-Provider Integration](file:///Users/ojaspolakhare/Documents/GitHub/Introspect/Planning/knowledge_base/ai_integration.md)
+* Vercel AI SDK v6 with multi-provider support: Groq (default), OpenAI, Anthropic, Google, Ollama, or custom endpoints.
+* Structured output fallback chain (tool → JSON → text) via `src/server/ai/structured.ts` for robust extraction.
+* **Workflow 1 (Habit Extraction)**: Tool calling or JSON mode with Zod schema validation on entry save.
+* **Workflow 2 (Behavioral Insights)**: Text generation for long-term pattern analysis and executive coaching briefs.
+* BYO-provider tiers (hosted/BYO/selfhost) and per-user API key settings.
 
 ### 5. [Developer & Branching Workflows](file:///Users/ojaspolakhare/Documents/GitHub/Introspect/Planning/knowledge_base/workflows.md)
 * Branching strategies (`main`, `develop`, `feature/*`, `fix/*`, `hotfix/*`).

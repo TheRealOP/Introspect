@@ -1,47 +1,70 @@
-# 🤖 AI Integration & Gemini Prompt Strategy
+# 🤖 AI Integration & Multi-Provider Strategy
 
-This article outlines our AI integration architecture, detailing how **Google Gemini** connects with **Vercel AI SDK v6** server-side, and explores our habit extraction and nudging strategies.
+This article outlines our AI integration architecture, detailing how **multi-provider LLM support** (Groq, OpenAI, Anthropic, Google, Ollama, or custom) connects with **Vercel AI SDK v6** server-side, and explores our habit extraction and nudging strategies.
 
 ---
 
 ## 🏗️ The AI Architecture
 
-Introspect isolates all AI processing server-side. **No AI API calls occur in the browser.** This keeps client bundles lightweight, shields API keys from theft, and provides centralized control over prompting.
+Introspect isolates all AI processing server-side. **No AI API calls occur in the browser.** This keeps client bundles lightweight, shields API keys from theft, and provides centralized control over prompting. Users can configure their preferred AI provider with their own API key, or fall back to Groq (default).
 
 ```mermaid
 graph LR
     User[Browser Client] -- tRPC Mutation --> Proc[tRPC Server Procedure]
     subgraph Server Side
-        Proc -- ORM Write --> SQLite[(SQLite db.sqlite)]
-        Proc -- Vercel AI SDK --> SDK[ai v6]
-        SDK -- Secure API Key --> Gemini((Google Gemini))
+        Proc -- Query settings DB --> Settings[(Per-User Settings)]
+        Settings -- Provider config --> Resolver[resolveAi]
+        Resolver -- Vercel AI SDK --> SDK[ai v6]
+        SDK -- Secure API Key --> Providers[Groq/OpenAI/Anthropic/Google/Ollama/Custom]
+        Proc -- ORM Write --> DB[(Per-User SQLite)]
+        Proc -- generateStructured<br/>Fallback Chain --> Structured[Tool → JSON → Text]
     end
-    Gemini -- JSON response --> SDK
-    SDK -- Zod Validated Object --> Proc
-    Proc -- Write Extracted Data --> SQLite
+    Providers -- JSON response --> SDK
+    SDK -- Zod Validated Object --> Structured
+    Structured -- Structured Result --> Proc
+    Proc -- Write Extracted Data --> DB
 ```
 
 ### 🛠️ Core Libraries
-* **`ai` (Vercel AI SDK v6)**: A robust framework for communicating with LLMs. We leverage its high-level `generateObject` and `generateText` APIs.
-* **`@ai-sdk/google`**: Official Google AI provider interface, configured to utilize Gemini models.
+* **`ai` (Vercel AI SDK v6)**: Provider-agnostic LLM framework. We use `generateText` with tool calling, `generateObject` for JSON mode, and plain text fallback.
+* **`@ai-sdk/*` providers**: Modular adapters for Groq, OpenAI, Anthropic, Google, Ollama, and OpenAI-compatible endpoints.
 * **`zod`**: Schema validator used to strictly validate AI outputs at runtime before writing them to SQLite.
+* **`src/server/ai/structured.ts`**: Fallback chain orchestrator (tool → JSON → text regex) for robust structured output across models.
 
 ---
 
-## 🔒 Key Setup & Validation (`src/env.js`)
+## 🔒 Key Setup & Validation
 
-Our Gemini API keys are retrieved securely from environment variables. During startup, the application verifies the key's presence via the `t3-env` schema:
+AI provider configuration is **per-user**, stored in the `introspect_settings` table (singleton row `id = "default"`). Environment variables provide server-wide defaults:
 
-* **`.env` Configuration**:
-  ```bash
-  GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy... # Obtained from aistudio.google.com
-  ```
-* **Schema Validation (`src/env.js`)**:
+* **User Settings (DB)**:
+  The `settings` table stores:
   ```typescript
-  server: {
-    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
-  }
+  provider: "groq" | "openai" | "anthropic" | "google" | "ollama" | "custom" | "hosted"
+  model: string  // e.g., "llama-3.3-70b-versatile" for Groq
+  apiKey: string // User's API key (encrypted at rest if possible)
+  baseUrl: string // Custom endpoint for ollama/custom
+  mode: "auto" | "tool" | "json"  // Structured output strategy
+  tier: "hosted" | "byo" | "selfhost"  // Billing model
   ```
+
+* **Environment Defaults (`src/env.js`)**:
+  ```bash
+  # Default provider if user has no settings row
+  AI_PROVIDER=groq
+  AI_MODEL=llama-3.3-70b-versatile
+  GROQ_API_KEY=...       # From groq.com console
+  OPENAI_API_KEY=...     # Optional fallback
+  ANTHROPIC_API_KEY=...  # Optional fallback
+  GOOGLE_GENERATIVE_AI_API_KEY=...  # Optional fallback
+  AI_BASE_URL=...        # Custom Ollama endpoint (e.g., http://localhost:11434/v1)
+  ```
+
+* **Resolution Flow** (`src/server/ai/provider.ts`):
+  1. Query user's `settings` row from per-user DB
+  2. If `provider` and `model` are set, use those
+  3. Otherwise, fall back to `AI_PROVIDER`, `AI_MODEL`, and corresponding `*_API_KEY` env vars
+  4. Default: Groq at `localhost:11434` (requires local Ollama in dev)
 
 ---
 
@@ -50,7 +73,7 @@ Our Gemini API keys are retrieved securely from environment variables. During st
 We optimize LLM costs and processing latency by mapping all AI tasks to **exactly two key execution vectors**:
 
 ### 1. The Real-time Habit & Nudge Extractor (Triggers: On Entry Save)
-When a user finishes writing a daily journal entry, a backend mutation procedure triggers. We send the new entry alongside historical context to Gemini. We use `generateObject()` to enforce a type-safe JSON response matching a Zod schema.
+When a user finishes writing a daily journal entry, a backend mutation procedure triggers. We send the new entry alongside historical context to the AI provider. We use `generateStructured()` (from `src/server/ai/structured.ts`) with a fallback chain to extract structured data reliably across all model types.
 
 #### The Zod Schema Structure
 ```typescript
@@ -68,6 +91,14 @@ export const aiExtractionSchema = z.object({
 });
 ```
 
+#### The Structured Output Strategy
+`generateStructured(opts)` from `src/server/ai/structured.ts` uses a **fallback chain**:
+1. **Tool calling** (fastest, most reliable for capable models) — calls the tool with structured input
+2. **JSON mode** (via `generateObject`) — if tool calling fails or unsupported
+3. **Plain text + regex** — final fallback for models without structured output support
+
+This ensures extraction works across Groq 70B, small local Llama models, Gemma, and everything in between.
+
 #### The Extraction Prompt Architecture
 ```
 System Prompt:
@@ -81,7 +112,20 @@ Context Details:
 - Latest Entry: [The entry the user just saved]
 ```
 
-Upon receiving the validated JSON object:
+**Structured Extraction Call**:
+```typescript
+const result = await generateStructured({
+  model,
+  schema: aiExtractionSchema,  // Zod schema for habits + nudge
+  toolName: "extract_habits",
+  toolDescription: "Extract habits and nudge from user journal entry",
+  system: systemPrompt,
+  prompt: userPrompt,
+  mode: config.mode,  // "auto" | "tool" | "json" (from settings)
+});
+```
+
+Upon receiving the validated object:
 1. We iterate over the `habits` list, searching SQLite for existing entries by name.
 2. If a habit matches, we **increment its occurrences counter** and update its `lastSeen` and `sentiment`.
 3. If it is new, we insert a new record into `introspect_habits`.
@@ -111,9 +155,11 @@ Output Guidelines:
 
 ## 💡 Prompt Engineering & Token Efficiency Rules
 
-To keep the application highly responsive and cost-effective, we adhere to three strict prompting principles:
+To keep the application highly responsive and cost-effective, we adhere to strict prompting principles:
 
-1. **Minimize History Window**: We cap historical entries sent during habit extraction at the **last 5 entries**. Sending months of history swells token consumption and causes response latency to climb.
-2. **Strict Temperature Controls**: We configure `temperature` at `0.1` or `0.2` for extraction tasks. This forces the model to be highly consistent and reduces "hallucinations" of habits the user didn't mention.
-3. **Structured Outputs Only**: We never use open-ended text generations for database writes. Enforcing structured Zod schemas with `generateObject()` eliminates JSON parsing failures and invalid field values, preventing backend runtime crashes.
-4. **Offline Cache Check**: We only call the Deep Trajectory Analyst if new entries have been saved since the last compiled summary. If no new data has been written, we display the previously cached AI insight from the DB, ensuring instantaneous page loads.
+1. **Provider-Agnostic Latency**: Groq is the default (fast, affordable), but users can BYO key or self-host Ollama. Each provider has different latency/cost profiles; keep prompts concise to stay within typical serverless timeouts (<10s on Vercel).
+2. **Minimize History Window**: We cap historical entries sent during habit extraction at the **last 5 entries**. Sending months of history swells token consumption and causes response latency to climb.
+3. **Strict Temperature Controls**: We configure `temperature` at `0.1` or `0.2` for extraction tasks. This forces the model to be highly consistent and reduces "hallucinations" of habits the user didn't mention.
+4. **Structured Outputs via Fallback Chain**: We use `generateStructured()` instead of raw `generateText()` or `generateObject()`. The fallback chain (tool → JSON → text) ensures extraction works even for weaker models without crashing on malformed JSON.
+5. **Offline Cache Check**: We only call the Deep Trajectory Analyst if new entries have been saved since the last compiled summary. If no new data has been written, we display the previously cached AI insight from the DB, ensuring instantaneous page loads.
+6. **Per-User Mode Configuration**: Each user can set `mode` in settings to force "tool", "json", or "auto" behavior — enabling performance tuning for their chosen provider.

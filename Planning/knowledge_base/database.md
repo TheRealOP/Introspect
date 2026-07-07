@@ -83,29 +83,36 @@ export const createTable = sqliteTableCreator((name) => `introspect_${name}`);
 
 ## 📊 Database Schema Details
 
-We maintain **three core tables** that form the operational backbone of the Introspect user workflow:
+We maintain **11 tables** that power the complete Introspect workflow:
+
+| Table | Purpose |
+|---|---|
+| `introspect_entries` | Activity check-in logs with journal content |
+| `introspect_habits` | Extracted behavioral patterns with sentiment tracking |
+| `introspect_nudges` | AI-generated 2-minute actionable nudges per entry |
+| `introspect_habit_occurrences` | Per-habit sighting records (enables streak computation) |
+| `introspect_settings` | User's AI provider config (singleton: `id = "default"`) |
+| `introspect_profile` | Cached AI knowledge-graph profile and user summary |
+| `introspect_wiki_pages` | Wiki-style knowledge graph nodes (one page per concept) |
+| `introspect_wiki_edges` | Directed relationships between wiki pages |
+| `introspect_chat_messages` | Persistent chat history (role, content, timestamp) |
+| `introspect_push_subscriptions` | Web Push endpoints and credentials (one per device) |
+| `introspect_reminders` | Reminder preferences and last-notified timestamp (singleton) |
+
+Core dependency flow:
 
 ```mermaid
-erDiagram
-    introspect_entries ||--o{ introspect_nudges : "generates"
-    introspect_entries {
-        text id PK
-        text content "NOT NULL"
-        integer createdAt "unixepoch"
-    }
-    introspect_habits {
-        text id PK
-        text name "NOT NULL"
-        text sentiment "NOT NULL"
-        integer occurrences "DEFAULT 1"
-        integer lastSeen "unixepoch"
-    }
-    introspect_nudges {
-        text id PK
-        text entryId FK
-        text action "NOT NULL"
-        integer createdAt "unixepoch"
-    }
+graph TD
+    entries[entries] --> nudges[nudges]
+    entries --> habits[habits]
+    habits --> ho[habit_occurrences]
+    entries --> chat[chat_messages]
+    chat --> wiki[wiki_pages]
+    wiki --> edges[wiki_edges]
+    settings[settings] -.->|singleton| profile[profile]
+    settings -.->|singleton| reminders[reminders]
+    profile -.->|summary of| habits
+    push[push_subscriptions] -.->|notifications for| reminders
 ```
 
 ---
@@ -132,7 +139,7 @@ Stores activity check-in entries — timestamped logs of what the user has done 
 ---
 
 ### 2. `introspect_habits`
-Stores unique habits extracted from the journal entries. New entries are parsed by Gemini to increment counts and update sentiment.
+Stores unique habits extracted from the journal entries. New entries are parsed by the AI provider to increment counts and update sentiment.
 
 * **Drizzle Definition**:
   ```typescript
