@@ -93,4 +93,4 @@ Chronological records of working sessions and the decisions made in them:
 * [session_phase4_chat_wiki.md](session_phase4_chat_wiki.md)
 * [web_push_reminders.md](web_push_reminders.md)
 * [ai_provider_control.md](ai_provider_control.md)
-* [session_repo_organization.md](session_repo_organization.md) — repo cleanup: user DBs untracked from git, real README, complete `.env.example`, scaffold `post` router removed.
+* [session_repo_organization.md](session_repo_organization.md) — **2026-07-07** — repo cleanup (PR #8): user DBs untracked from git, real README, complete `.env.example`, scaffold `post` router removed.

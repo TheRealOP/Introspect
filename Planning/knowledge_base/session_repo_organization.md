@@ -1,5 +1,9 @@
 # Session Log — Repo Organization Cleanup (2026-07-07)
 
+**Date:** July 7, 2026
+**Branch:** `feature/repo-organization`
+**PR:** [#8](https://github.com/TheRealOP/Introspect/pull/8) (draft, targets `develop`)
+
 ## Goal
 
 Make the repository more usable: accurate onboarding docs, no leftover scaffold code, and no user data in version control.
