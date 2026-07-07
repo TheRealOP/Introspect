@@ -91,3 +91,13 @@ If you prefer reading plain Markdown files, they are structured as follows:
 * Turso Platform API provisioning flow (with local file fallback in dev).
 * Step-by-step Vercel deployment checklist.
 * Security notes on password storage and token handling.
+
+### Session Logs
+
+Chronological records of working sessions and the decisions made in them:
+
+* [session_launch.md](session_launch.md)
+* [session_phase4_chat_wiki.md](session_phase4_chat_wiki.md)
+* [web_push_reminders.md](web_push_reminders.md)
+* [ai_provider_control.md](ai_provider_control.md)
+* [session_repo_organization.md](session_repo_organization.md) — **2026-07-07** — repo cleanup (PR #8): user DBs untracked from git, real README, complete `.env.example`, scaffold `post` router removed.
