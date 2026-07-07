@@ -8,10 +8,11 @@
 # testing
 /coverage
 
-# database
-/prisma/db.sqlite
-/prisma/db.sqlite-journal
-db.sqlite
+# databases — never commit local or user data
+*.sqlite
+*.sqlite-journal
+*.db
+*.db-journal
 
 # next.js
 /.next/
@@ -52,6 +53,9 @@ AGENTS.md
 
 # omc runtime state
 .omc/
+
+# claude code local state (worktrees, settings)
+.claude/
 
 # drizzle migrations (generated, not checked in for sqlite)
 /drizzle

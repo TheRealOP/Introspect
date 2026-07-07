@@ -1,29 +1,69 @@
-# Create T3 App
+# Introspect
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A personal journaling and habit-tracking app with an AI layer. You log quick activity check-ins; the AI extracts habits from them, proposes micro-action nudges, chats about your entries, and builds long-term insights — all served from a per-user database so each account's data stays isolated.
 
-## What's next? How do I make an app with this?
+## Stack
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- **Next.js 15** (App Router) + React 19 + Tailwind CSS v4
+- **tRPC 11** — typesafe API layer, all AI calls run server-side inside tRPC mutations
+- **Drizzle ORM + libsql** — SQLite locally, [Turso](https://turso.tech) in production (one database per user, plus a central users/feedback DB)
+- **NextAuth v5** — email/password credentials with email verification (Resend)
+- **Vercel AI SDK v6** — provider-agnostic; Groq by default, with OpenAI / Anthropic / Google supported
+- **Web Push** — reminder notifications via a service worker and a cron endpoint
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Getting Started
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+```bash
+npm install
+cp .env.example .env    # then fill in the values (see .env.example comments)
+npm run db:push         # create the local SQLite schema
+npm run dev             # http://localhost:3000
+```
 
-## Learn More
+Local development needs no Turso account: `USERS_DATABASE_URL` and `DATABASE_URL` can point at local files, and per-user databases fall back to local files when the Turso API vars are unset.
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Scripts
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the dev server (Turbopack) |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run preview` | Build + start |
+| `npm run typecheck` | TypeScript check, no emit |
+| `npm run db:push` | Push the Drizzle schema to the database |
+| `npm run db:generate` / `db:migrate` | Generate / run migrations |
+| `npm run db:studio` | Browse the DB in Drizzle Studio |
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+## Project Layout
 
-## How do I deploy this?
+```
+src/
+├── app/               # Next.js App Router pages
+│   ├── _components/   # Client components (journal, chat, habits, settings, …)
+│   └── api/           # Route handlers: auth, chat streaming, cron, feedback, tRPC
+├── server/
+│   ├── ai/            # AI workflows: extraction, insights, chat, provider selection
+│   ├── api/           # tRPC root + routers (journal, habits, insights, wiki, …)
+│   ├── db/            # Drizzle schema, per-user DB factory, central users DB client
+│   ├── auth.ts        # NextAuth v5 config
+│   ├── email.ts       # Resend email sending
+│   ├── push.ts        # Web push delivery
+│   └── turso.ts       # Turso Platform API — provisions per-user databases
+├── trpc/              # tRPC client/server helpers for React
+└── middleware.ts      # Auth-gated routing
+Planning/              # Product docs, phase plans, mental model
+└── knowledge_base/    # Architecture / DB / API / AI docs — read this first
+```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Documentation
+
+Deeper docs live in [`Planning/knowledge_base/`](Planning/knowledge_base/README.md) — architecture, database schema, tRPC setup, AI integration, and product decisions. The current-state mental model is at `Planning/mental-model.html`.
+
+## Branching
+
+- `main` — production only, merged via PR from `develop`
+- `develop` — integration branch; all work lands here via PR
+- `feature/*`, `fix/*`, `hotfix/*` — branch off `develop` (hotfixes off `main`)
+
+Never push directly to `main` or `develop`.
