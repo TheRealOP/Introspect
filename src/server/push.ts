@@ -2,12 +2,19 @@ import webpush from "web-push";
 
 import { env } from "~/env";
 
-// Initialize VAPID once at module load
-webpush.setVapidDetails(
-  env.VAPID_SUBJECT,
-  env.VAPID_PUBLIC_KEY,
-  env.VAPID_PRIVATE_KEY,
-);
+// Initialized lazily: module-scope setup would run while Next.js collects
+// page data at build time (e.g. in CI), where the VAPID env vars don't exist.
+let vapidInitialized = false;
+
+function ensureVapid() {
+  if (vapidInitialized) return;
+  webpush.setVapidDetails(
+    env.VAPID_SUBJECT,
+    env.VAPID_PUBLIC_KEY,
+    env.VAPID_PRIVATE_KEY,
+  );
+  vapidInitialized = true;
+}
 
 export interface PushSubscriptionData {
   endpoint: string;
@@ -21,6 +28,7 @@ export async function sendPush(
   subscription: PushSubscriptionData,
   payload: { title: string; body: string; url?: string },
 ): Promise<{ ok: true } | { ok: false; gone: boolean }> {
+  ensureVapid();
   try {
     await webpush.sendNotification(subscription, JSON.stringify(payload));
     return { ok: true };

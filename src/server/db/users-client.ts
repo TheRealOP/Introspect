@@ -1,15 +1,22 @@
-import { createClient } from "@libsql/client/node";
+import { createClient, type Client } from "@libsql/client/node";
 
 import { env } from "~/env";
 
-const client = createClient({
-  url: env.USERS_DATABASE_URL,
-  authToken: env.USERS_DATABASE_AUTH_TOKEN,
-});
+// Created lazily: Next.js evaluates route modules while collecting page data
+// at build time (e.g. in CI), where USERS_DATABASE_URL doesn't exist.
+let _client: Client | null = null;
+
+function getClient(): Client {
+  _client ??= createClient({
+    url: env.USERS_DATABASE_URL,
+    authToken: env.USERS_DATABASE_AUTH_TOKEN,
+  });
+  return _client;
+}
 
 export async function initUsersDb() {
   // Create users table
-  await client.execute(`
+  await getClient().execute(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY NOT NULL,
       email TEXT NOT NULL,
@@ -22,7 +29,7 @@ export async function initUsersDb() {
   `);
 
   // Create feedback table — central store across all users
-  await client.execute(`
+  await getClient().execute(`
     CREATE TABLE IF NOT EXISTS feedback (
       id TEXT PRIMARY KEY NOT NULL,
       message TEXT NOT NULL,
@@ -36,13 +43,13 @@ export async function initUsersDb() {
 
   // Migrate existing DBs that don't have emailVerified column yet
   try {
-    await client.execute("ALTER TABLE users ADD COLUMN emailVerified INTEGER");
+    await getClient().execute("ALTER TABLE users ADD COLUMN emailVerified INTEGER");
   } catch {
     // Column already exists — ignore
   }
 
   // Create verification tokens table
-  await client.execute(`
+  await getClient().execute(`
     CREATE TABLE IF NOT EXISTS verification_tokens (
       token TEXT PRIMARY KEY NOT NULL,
       email TEXT NOT NULL,
@@ -52,7 +59,7 @@ export async function initUsersDb() {
 }
 
 export async function getUserByEmail(email: string) {
-  const result = await client.execute({
+  const result = await getClient().execute({
     sql: "SELECT * FROM users WHERE lower(email) = lower(?1)",
     args: [email],
   });
@@ -76,7 +83,7 @@ export async function createUser(data: {
   dbAuthToken: string;
 }) {
   await initUsersDb();
-  await client.execute({
+  await getClient().execute({
     sql: "INSERT INTO users (id, email, passwordHash, dbUrl, dbAuthToken) VALUES (?1, ?2, ?3, ?4, ?5)",
     args: [
       data.id,
@@ -91,13 +98,13 @@ export async function createUser(data: {
 export async function createVerificationToken(email: string): Promise<string> {
   await initUsersDb();
   // Remove any prior tokens for this email
-  await client.execute({
+  await getClient().execute({
     sql: "DELETE FROM verification_tokens WHERE lower(email) = lower(?1)",
     args: [email],
   });
   const token = crypto.randomUUID();
   const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // 24 hours
-  await client.execute({
+  await getClient().execute({
     sql: "INSERT INTO verification_tokens (token, email, expiresAt) VALUES (?1, ?2, ?3)",
     args: [token, email.toLowerCase(), expiresAt],
   });
@@ -107,7 +114,7 @@ export async function createVerificationToken(email: string): Promise<string> {
 export async function consumeVerificationToken(
   token: string,
 ): Promise<{ email: string } | null> {
-  const result = await client.execute({
+  const result = await getClient().execute({
     sql: "SELECT * FROM verification_tokens WHERE token = ?1",
     args: [token],
   });
@@ -116,14 +123,14 @@ export async function consumeVerificationToken(
   const now = Math.floor(Date.now() / 1000);
   if ((row.expiresAt as number) < now) {
     // Expired — clean up
-    await client.execute({
+    await getClient().execute({
       sql: "DELETE FROM verification_tokens WHERE token = ?1",
       args: [token],
     });
     return null;
   }
   // Consume (single-use)
-  await client.execute({
+  await getClient().execute({
     sql: "DELETE FROM verification_tokens WHERE token = ?1",
     args: [token],
   });
@@ -131,7 +138,7 @@ export async function consumeVerificationToken(
 }
 
 export async function markEmailVerified(email: string): Promise<void> {
-  await client.execute({
+  await getClient().execute({
     sql: "UPDATE users SET emailVerified = unixepoch() WHERE lower(email) = lower(?1)",
     args: [email],
   });
@@ -146,7 +153,7 @@ export async function createFeedback(data: {
 }): Promise<void> {
   await initUsersDb();
   const id = crypto.randomUUID();
-  await client.execute({
+  await getClient().execute({
     sql: "INSERT INTO feedback (id, message, email, category, userId, userAgent) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
     args: [
       id,
@@ -162,7 +169,7 @@ export async function createFeedback(data: {
 export async function listUsers(): Promise<
   { id: string; dbUrl: string; dbAuthToken: string }[]
 > {
-  const result = await client.execute(
+  const result = await getClient().execute(
     "SELECT id, dbUrl, dbAuthToken FROM users",
   );
   return result.rows.map((row) => ({
@@ -183,7 +190,7 @@ export async function listFeedback(): Promise<
     createdAt: number;
   }[]
 > {
-  const result = await client.execute(
+  const result = await getClient().execute(
     "SELECT * FROM feedback ORDER BY createdAt DESC",
   );
   return result.rows.map((row) => ({
