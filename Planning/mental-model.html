@@ -9,8 +9,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
+      background: #fffafb;
+      color: #110104;
       min-height: 100vh;
       padding: 40px 24px;
     }
@@ -18,13 +18,13 @@
     h1 {
       font-size: 1.6rem;
       font-weight: 700;
-      color: #fff;
+      color: #110104;
       margin-bottom: 4px;
     }
 
     .meta {
       font-size: 0.78rem;
-      color: #64748b;
+      color: rgba(17, 1, 4, 0.58);
       margin-bottom: 40px;
     }
 
@@ -34,7 +34,7 @@
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #475569;
+      color: rgba(17, 1, 4, 0.5);
       margin-bottom: 10px;
       padding-left: 4px;
     }
@@ -54,44 +54,44 @@
 
     /* ── CARDS ── */
     .card {
-      background: #1e2330;
-      border: 1px solid #2d3748;
+      background: #ffffff;
+      border: 1px solid rgba(17, 1, 4, 0.1);
       border-radius: 10px;
       padding: 14px 18px;
       min-width: 180px;
       flex: 0 0 auto;
     }
 
-    .card.accent-blue  { border-left: 3px solid #3b82f6; }
+    .card.accent-blue  { border-left: 3px solid #ef244e; }
     .card.accent-green { border-left: 3px solid #22c55e; }
-    .card.accent-purple{ border-left: 3px solid #a855f7; }
-    .card.accent-amber { border-left: 3px solid #f59e0b; }
-    .card.accent-red   { border-left: 3px solid #ef4444; }
+    .card.accent-purple{ border-left: 3px solid #f5b37b; }
+    .card.accent-amber { border-left: 3px solid #f2c54f; }
+    .card.accent-red   { border-left: 3px solid #ef244e; }
     .card.accent-teal  { border-left: 3px solid #14b8a6; }
-    .card.accent-pink  { border-left: 3px solid #ec4899; }
-    .card.accent-sky   { border-left: 3px solid #0ea5e9; }
-    .card.accent-gray  { border-left: 3px solid #6b7280; }
+    .card.accent-pink  { border-left: 3px solid #ef244e; }
+    .card.accent-sky   { border-left: 3px solid #f5b37b; }
+    .card.accent-gray  { border-left: 3px solid rgba(17, 1, 4, 0.38); }
 
     .card-title {
       font-size: 0.82rem;
       font-weight: 700;
-      color: #f1f5f9;
+      color: #110104;
       margin-bottom: 6px;
     }
 
     .card-sub {
       font-size: 0.72rem;
-      color: #94a3b8;
+      color: rgba(17, 1, 4, 0.66);
       line-height: 1.55;
     }
 
     .card-sub code {
       font-family: "JetBrains Mono", "Fira Code", monospace;
       font-size: 0.68rem;
-      background: #0f1117;
+      background: #fffafb;
       border-radius: 3px;
       padding: 1px 4px;
-      color: #7dd3fc;
+      color: #ef244e;
     }
 
     .tag {
@@ -106,10 +106,10 @@
       margin-top: 4px;
     }
 
-    .tag-stub   { background: #1e3a5f; color: #7dd3fc; }
+    .tag-stub   { background: #fff0f3; color: #ef244e; }
     .tag-done   { background: #14532d; color: #86efac; }
     .tag-future { background: #2d1f3d; color: #d8b4fe; }
-    .tag-schema { background: #2c1a00; color: #fbbf24; }
+    .tag-schema { background: #fff7d8; color: #8a5f00; }
 
     /* ── ARROWS ── */
     .arrow-row {
@@ -123,7 +123,7 @@
     .arrow {
       display: flex;
       align-items: center;
-      color: #334155;
+      color: rgba(17, 1, 4, 0.35);
       font-size: 1rem;
       padding: 0 6px;
       user-select: none;
@@ -131,7 +131,7 @@
 
     .arrow-label {
       font-size: 0.62rem;
-      color: #475569;
+      color: rgba(17, 1, 4, 0.5);
       padding: 0 4px;
     }
 
@@ -145,24 +145,24 @@
 
     .schema-table th {
       text-align: left;
-      color: #64748b;
+      color: rgba(17, 1, 4, 0.5);
       font-weight: 600;
       padding: 4px 10px 4px 0;
-      border-bottom: 1px solid #2d3748;
+      border-bottom: 1px solid rgba(17, 1, 4, 0.1);
     }
 
     .schema-table td {
       padding: 4px 10px 4px 0;
-      color: #94a3b8;
+      color: rgba(17, 1, 4, 0.66);
       vertical-align: top;
-      border-bottom: 1px solid #1e2330;
+      border-bottom: 1px solid rgba(17, 1, 4, 0.06);
     }
 
     .schema-table td code {
       font-family: "JetBrains Mono", monospace;
       font-size: 0.66rem;
-      color: #7dd3fc;
-      background: #0f1117;
+      color: #ef244e;
+      background: #fffafb;
       border-radius: 3px;
       padding: 1px 4px;
     }
@@ -174,7 +174,7 @@
     /* ── DIVIDER ── */
     hr {
       border: none;
-      border-top: 1px solid #1e2330;
+      border-top: 1px solid rgba(17, 1, 4, 0.1);
       margin: 32px 0;
     }
 
@@ -189,13 +189,13 @@
     .env-key {
       font-family: "JetBrains Mono", monospace;
       font-size: 0.7rem;
-      color: #fbbf24;
+      color: #ef244e;
       min-width: 240px;
     }
 
     .env-val {
       font-size: 0.7rem;
-      color: #64748b;
+      color: rgba(17, 1, 4, 0.58);
     }
 
     /* ── PHASE LEGEND ── */
@@ -214,14 +214,14 @@
     }
 
     .phase-chip.done   { background: #14532d; color: #86efac; }
-    .phase-chip.next   { background: #1e3a5f; color: #7dd3fc; }
+    .phase-chip.next   { background: #fff0f3; color: #ef244e; }
     .phase-chip.future { background: #2d1f3d; color: #d8b4fe; }
   </style>
 </head>
 <body>
 
   <h1>Introspect — Mental Model</h1>
-  <p class="meta">Last updated: Phase 5 — Email/password auth + per-user Turso DBs + Vercel deploy-ready &nbsp;·&nbsp; Next.js 15 / tRPC 11 / Drizzle / SQLite (Turso) / Vercel AI SDK (Groq default) / NextAuth v5</p>
+  <p class="meta">Last updated: 2026-07-07 audit-fixes UI refresh — NextAuth v5 credentials auth + email verification · central users DB + per-user Turso DBs · 11 introspect tables · Vercel AI SDK v6 multi-provider layer · Tailwind v4 flat palette</p>
 
   <!-- ═══════════════════════════════════════════════════════
        PHASE PROGRESS
@@ -234,7 +234,7 @@
       <span class="phase-chip done">✓ Phase 3 · Habit extraction + 4-nudge picker</span>
       <span class="phase-chip done">✓ Phase 4 · Insights page + AI-agnostic layer</span>
       <span class="phase-chip done">✓ Phase 5 · Auth + per-user Turso DBs + Vercel deploy</span>
-      <span class="phase-chip done">✓ 2026-07-07 · Audit fixes (C1–M5) + repo cleanup + flat UI palette</span>
+      <span class="phase-chip done">✓ 2026-07-07 · Audit fixes · JWT-only Turso creds · email verification · cron + PWA whitelist · flat UI palette</span>
     </div>
   </div>
 
@@ -252,19 +252,26 @@
         <div class="card-title">Browser / Client</div>
         <div class="card-sub">
           React 19, Tailwind CSS v4<br/>
-          <b>Pages (4 routes):</b><br/>
+          <b>App routes:</b><br/>
           <code>src/app/page.tsx</code> — <code>/</code> check-in RSC shell <span class="tag tag-done">done</span><br/>
           <code>src/app/habits/page.tsx</code> — <code>/habits</code> all habits + edit/delete <span class="tag tag-done">done</span><br/>
           <code>src/app/log/page.tsx</code> — <code>/log</code> full check-in history <span class="tag tag-done">done</span><br/>
           <code>src/app/insights/page.tsx</code> — <code>/insights</code> streaks + AI profile <span class="tag tag-done">done</span><br/>
+          <code>src/app/chat/page.tsx</code> — <code>/chat</code> streaming coach + wiki graph <span class="tag tag-done">done</span><br/>
+          <code>src/app/settings/page.tsx</code> — <code>/settings</code> AI provider + reminders <span class="tag tag-done">done</span><br/>
+          <code>src/app/feedback/page.tsx</code> — <code>/feedback</code> anonymous/authenticated feedback <span class="tag tag-done">done</span><br/>
+          <code>src/app/feedback/inbox/page.tsx</code> — <code>/feedback/inbox</code> admin feedback inbox <span class="tag tag-done">done</span><br/>
+          <code>src/app/auth/signin/page.tsx</code> · <code>src/app/auth/signup/page.tsx</code> · <code>src/app/auth/verify/page.tsx</code> — auth + email verification <span class="tag tag-done">done</span><br/>
           <b>Components:</b><br/>
           <code>src/app/_components/nav.tsx</code> — shared nav bar (active-link highlight) <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/journal.tsx</code> — textarea + nudge picker only (log/habits moved out) <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/habits-view.tsx</code> — habits list + inline sentiment edit + delete <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/log-view.tsx</code> — paginated check-in log display <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/insights.tsx</code> — streaks + AI profile + nudge stats (inline settings panel removed → /settings) <span class="tag tag-done">done</span><br/>
-          <code>src/app/settings/page.tsx</code> — <code>/settings</code> AI provider &amp; data residency page <span class="tag tag-done">done</span><br/>
-          <code>src/app/_components/ai-settings.tsx</code> — tier cards (hosted/BYO/self-host), provider picker, mode selector, test-connection <span class="tag tag-done">done</span>
+          <code>src/app/_components/ai-settings.tsx</code> — tier cards (hosted/BYO/self-host), provider picker, mode selector, test-connection <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/reminder-settings.tsx</code> — push subscription + reminder interval controls <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/chat-view.tsx</code> — chat UI + wiki drawer <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/feedback-form.tsx</code> — feedback submission form <span class="tag tag-done">done</span>
         </div>
       </div>
     </div>
@@ -282,6 +289,17 @@
           <code>src/app/api/trpc/[trpc]/route.ts</code><br/>
           Next.js Route Handler (App Router)<br/>
           Transformer: <code>superjson</code>
+        </div>
+      </div>
+      <div class="card accent-sky">
+        <div class="card-title">HTTP API Routes</div>
+        <div class="card-sub">
+          <code>src/app/api/auth/[...nextauth]/route.ts</code> — NextAuth handler<br/>
+          <code>src/app/api/signup/route.ts</code> — signup + per-user DB provisioning<br/>
+          <code>src/app/api/verify/route.ts</code> · <code>resend</code> — email verification<br/>
+          <code>src/app/api/chat/route.ts</code> — streaming chat + wiki updates<br/>
+          <code>src/app/api/feedback/route.ts</code> — public feedback intake<br/>
+          <code>src/app/api/cron/reminders/route.ts</code> — Vercel Cron reminder sender
         </div>
       </div>
       <div class="card accent-gray">
@@ -322,6 +340,10 @@
         <div class="card-sub">
           <code>src/server/api/routers/</code><br/>
           <b>wiki</b> · <b>push</b> · <b>reminders</b> · <b>feedback</b><br/>
+          <b>wiki</b>: pages · edges · page lookup · persisted chat history<br/>
+          <b>push</b>: subscribe · unsubscribe · status by endpoint<br/>
+          <b>reminders</b>: get · update singleton reminder preferences<br/>
+          <b>feedback</b>: admin list from central feedback table<br/>
           <br/>
           Scaffold <code>post</code> router removed in the<br/>
           2026-07-07 repo cleanup.
@@ -381,7 +403,9 @@
         <div class="card-title">tRPC Context</div>
         <div class="card-sub">
           <code>src/server/api/trpc.ts</code><br/>
-          <code>createTRPCContext</code> injects <code>db</code><br/>
+          <code>createTRPCContext</code> calls <code>auth()</code>, then <code>getUserDbCredentials(headers)</code><br/>
+          Turso <code>dbUrl</code> / <code>dbAuthToken</code> live in the encrypted JWT only, never the browser session<br/>
+          <code>createUserDb()</code> opens the per-user DB and <code>ensureUserTables()</code> runs lazy migrations<br/>
           <code>timingMiddleware</code> — logs latency<br/>
           dev: random 100–500 ms artificial delay
         </div>
