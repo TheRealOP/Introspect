@@ -6,12 +6,23 @@ export default auth((req) => {
   const isAuthed = !!req.auth;
   const { pathname } = req.nextUrl;
 
-  // Allow auth routes and the signup/verify APIs through without a session
+  // Paths reachable without a session. Beyond auth flows this must include:
+  // - /api/cron/* : called by Vercel Cron with no session cookie (guarded by
+  //   CRON_SECRET in the route itself). See audit C2.
+  // - /api/feedback : supports anonymous submissions.
+  // - the PWA manifest, service worker, and icons : fetched without cookies.
   const isPublic =
     pathname.startsWith("/auth") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/signup") ||
-    pathname.startsWith("/api/verify");
+    pathname.startsWith("/api/verify") ||
+    pathname.startsWith("/api/cron") ||
+    pathname === "/api/feedback" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js" ||
+    pathname === "/icon-192.png" ||
+    pathname === "/icon-512.png" ||
+    pathname === "/apple-touch-icon.png";
 
   if (!isAuthed && !isPublic) {
     const signInUrl = new URL("/auth/signin", req.url);

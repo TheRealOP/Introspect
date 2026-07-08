@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { api } from "~/trpc/react";
 
-// Convert a base64url string to Uint8Array (required by PushManager.subscribe)
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
@@ -59,22 +58,21 @@ export function ReminderSettings() {
 
   if (!mounted) return null;
 
-  // iOS but not installed as PWA — show install prompt
   if (isIos() && !isStandalone()) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-xl border border-text/10 bg-white p-5">
         <div className="mb-3 flex items-center gap-2">
           <span className="text-lg">🔔</span>
-          <h3 className="font-semibold text-white">Check-in Reminders</h3>
+          <h3 className="font-semibold text-text">Check-in Reminders</h3>
         </div>
-        <p className="mb-3 text-sm text-white/60">
+        <p className="mb-3 text-sm text-text/60">
           On iPhone, reminders require Introspect to be installed as an app.
         </p>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-          <p className="text-sm font-medium text-amber-300">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-50 p-3">
+          <p className="text-sm font-medium text-amber-700">
             Install Introspect first:
           </p>
-          <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-amber-200/80">
+          <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-amber-700/80">
             <li>
               Tap the <strong>Share</strong> button{" "}
               <span className="text-base">⎙</span> in Safari
@@ -89,15 +87,14 @@ export function ReminderSettings() {
     );
   }
 
-  // Browser doesn't support Web Push at all
   if (!supportsWebPush()) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-xl border border-text/10 bg-white p-5">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">🔔</span>
-          <h3 className="font-semibold text-white">Check-in Reminders</h3>
+          <h3 className="font-semibold text-text">Check-in Reminders</h3>
         </div>
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-text/50">
           Your browser doesn&apos;t support push notifications. Try Chrome,
           Edge, Firefox, or Safari 16.4+ on iOS.
         </p>
@@ -110,18 +107,15 @@ export function ReminderSettings() {
     setSaving(true);
     try {
       if (!enabled) {
-        // Request permission
         const permission = await Notification.requestPermission();
         if (permission !== "granted") {
           setError("Notification permission denied. Enable it in browser settings.");
           return;
         }
 
-        // Register service worker
         const reg = await navigator.serviceWorker.register("/sw.js");
         await navigator.serviceWorker.ready;
 
-        // Subscribe to push
         const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
@@ -140,7 +134,6 @@ export function ReminderSettings() {
         });
         await updateReminders.mutateAsync({ enabled: true, intervalHours });
       } else {
-        // Unsubscribe from push
         const reg = await navigator.serviceWorker.getRegistration("/sw.js");
         if (reg) {
           const sub = await reg.pushManager.getSubscription();
@@ -172,13 +165,13 @@ export function ReminderSettings() {
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+    <div className="rounded-xl border border-text/10 bg-white p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">🔔</span>
           <div>
-            <h3 className="font-semibold text-white">Check-in Reminders</h3>
-            <p className="text-xs text-white/40">
+            <h3 className="font-semibold text-text">Check-in Reminders</h3>
+            <p className="text-xs text-text/40">
               Get notified when it&apos;s time to check in
             </p>
           </div>
@@ -188,8 +181,8 @@ export function ReminderSettings() {
         <button
           onClick={handleToggle}
           disabled={saving}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 ${
-            enabled ? "bg-purple-600" : "bg-white/20"
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 ${
+            enabled ? "bg-primary" : "bg-text/20"
           }`}
           aria-label={enabled ? "Disable reminders" : "Enable reminders"}
         >
@@ -204,29 +197,29 @@ export function ReminderSettings() {
       {/* Interval selector — only shown when enabled */}
       {enabled && (
         <div className="mt-4 flex items-center gap-3">
-          <span className="text-sm text-white/60">Remind me every</span>
+          <span className="text-sm text-text/60">Remind me every</span>
           <select
             value={intervalHours}
             onChange={(e) => handleIntervalChange(Number(e.target.value))}
             disabled={saving}
-            className="rounded-lg border border-white/20 bg-white/10 px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+            className="rounded-lg border border-text/20 bg-background px-3 py-1 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             {[1, 2, 3, 4, 6, 8, 12, 24].map((h) => (
-              <option key={h} value={h} className="bg-[#15162c] text-white">
+              <option key={h} value={h}>
                 {h} {h === 1 ? "hour" : "hours"}
               </option>
             ))}
           </select>
-          <span className="text-sm text-white/60">of inactivity</span>
+          <span className="text-sm text-text/60">of inactivity</span>
         </div>
       )}
 
       {error && (
-        <p className="mt-3 text-sm text-red-400">{error}</p>
+        <p className="mt-3 text-sm text-rose-600">{error}</p>
       )}
 
       {saving && (
-        <p className="mt-3 text-sm text-white/40">Saving…</p>
+        <p className="mt-3 text-sm text-text/40">Saving…</p>
       )}
     </div>
   );

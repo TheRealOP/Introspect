@@ -81,26 +81,31 @@ sequenceDiagram
     autonumber
     actor User as Browser / Client
     participant TR as trpc/react.tsx
+    participant MW as middleware.ts
     participant EH as app/api/trpc/...
     participant CTX as server/api/trpc.ts
     participant RR as server/api/routers/...
-    participant DB as Drizzle / SQLite
-    participant AI as Gemini API
+    participant DB as Per-User Drizzle / SQLite
+    participant AI as AI Provider (Groq/etc)
 
-    User->>TR: Invoke `api.post.hello.useQuery()`
-    TR->>EH: HTTP request sent via `superjson` JSON serialization
+    User->>TR: Invoke `api.journal.create.useMutation()`
+    TR->>MW: HTTP request with session cookie
+    activate MW
+    MW->>MW: Verify authentication (NextAuth session)
+    MW-->>EH: Session attached to request headers
+    deactivate MW
     activate EH
-    EH->>CTX: Initialize `createTRPCContext(headers)`
-    CTX-->>EH: Returns `ctx` containing `{ db }`
+    EH->>CTX: Initialize `createTRPCContext(headers, session)`
+    CTX-->>EH: Returns `ctx` containing `{ db, userId, session }`
     EH->>CTX: Executes `timingMiddleware`
     Note over CTX: Dev Only: Delays execution randomly<br/>by 100ms - 500ms (avoids waterfalls)
     EH->>RR: Forward action to procedure handler
     activate RR
-    RR->>DB: Read/Write queries via Drizzle ORM
+    RR->>DB: Read/Write queries via Drizzle ORM (per-user DB)
     DB-->>RR: SQL Records returned
     opt Triggered on mutations (e.g., saveEntry)
-        RR->>AI: Call Gemini using Vercel AI SDK
-        AI-->>RR: Structured JSON response returned
+        RR->>AI: Call AI Provider using Vercel AI SDK
+        AI-->>RR: Structured JSON response (via generateStructured)
         RR->>DB: Cache extracted habits / nudges
     end
     RR-->>EH: Returns payload
@@ -123,10 +128,18 @@ GET /api/trpc/post.hello?batch=1&input={"0":{"json":{"text":"world"}}}
 ```
 
 ### 3. The API Routing & Context
-The App Router route handler at `src/app/api/trpc/[trpc]/route.ts` captures the HTTP request and runs `createTRPCContext` (`src/server/api/trpc.ts`). This context injects a global database client:
+The App Router route handler at `src/app/api/trpc/[trpc]/route.ts` captures the HTTP request and runs `createTRPCContext` (`src/server/api/trpc.ts`). This context:
+1. Extracts the authenticated user from the NextAuth JWT session
+2. Retrieves the user's per-user database URL and auth token from the session
+3. Creates or reuses a per-user Drizzle client connected to their isolated database
+4. Returns context with `{ db, userId, session, ...opts }`
+
 ```typescript
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-  return { db, ...opts };
+export const createTRPCContext = async (opts: { headers: Headers; session: Session }) => {
+  const session = opts.session; // NextAuth session from middleware
+  if (!session?.user?.dbUrl) throw new Error("No database configured");
+  const userDb = createUserDb(session.user.dbUrl, session.user.dbAuthToken);
+  return { db: userDb, userId: session.user.id, session, ...opts };
 };
 ```
 

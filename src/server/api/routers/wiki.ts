@@ -4,13 +4,23 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { chatMessages, wikiEdges, wikiPages } from "~/server/db/schema";
 
+// Tolerate malformed JSON in the tags column so one bad row can't 500 the query.
+function parseTags(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
 export const wikiRouter = createTRPCRouter({
   // All wiki pages — for the graph view
   pages: publicProcedure.query(async ({ ctx }) => {
     const pages = await ctx.db.select().from(wikiPages);
     return pages.map((p) => ({
       ...p,
-      tags: p.tags ? (JSON.parse(p.tags) as string[]) : [],
+      tags: parseTags(p.tags),
     }));
   }),
 
@@ -29,7 +39,7 @@ export const wikiRouter = createTRPCRouter({
         .where(eq(wikiPages.slug, input.slug))
         .limit(1);
       if (!row) return null;
-      return { ...row, tags: row.tags ? (JSON.parse(row.tags) as string[]) : [] };
+      return { ...row, tags: parseTags(row.tags) };
     }),
 
   // Recent chat history for initializing useChat

@@ -1,36 +1,23 @@
 import { initTRPC, TRPCError } from "@trpc/server";
-import { sql } from "drizzle-orm";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "~/server/auth";
 import { createUserDb } from "~/server/db";
-
-// Columns added after initial launch — safe to run on every cold start
-const SETTINGS_MIGRATIONS = [
-  "ALTER TABLE `introspect_settings` ADD COLUMN `mode` TEXT",
-  "ALTER TABLE `introspect_settings` ADD COLUMN `tier` TEXT",
-];
-
-async function migrateUserDb(db: ReturnType<typeof createUserDb>) {
-  for (const stmt of SETTINGS_MIGRATIONS) {
-    try {
-      await db.run(sql.raw(stmt));
-    } catch {
-      // Column already exists — ignore
-    }
-  }
-}
+import { ensureUserTables } from "~/server/db/ensure-tables";
+import { getUserDbCredentials } from "~/server/user-db";
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth();
+  // Turso credentials live in the JWT only, not the client-visible session.
+  const creds = await getUserDbCredentials(opts.headers);
 
-  if (!session?.user?.dbUrl) {
+  if (!session?.user || !creds) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  const db = createUserDb(session.user.dbUrl, session.user.dbAuthToken);
-  await migrateUserDb(db);
+  const db = createUserDb(creds.dbUrl, creds.dbAuthToken);
+  await ensureUserTables(db);
 
   return {
     db,

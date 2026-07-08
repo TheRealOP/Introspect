@@ -6,12 +6,12 @@ import { api } from "~/trpc/react";
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
 const categoryColors: Record<string, string> = {
-  identity: "bg-violet-500/20 text-violet-300 border-violet-500/30",
-  habits: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-  blockers: "bg-rose-500/20 text-rose-300 border-rose-500/30",
-  goals: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-  thinking: "bg-sky-500/20 text-sky-300 border-sky-500/30",
-  context: "bg-white/10 text-white/50 border-white/20",
+  identity: "bg-primary/10 text-primary border-primary/25",
+  habits: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+  blockers: "bg-rose-500/15 text-rose-700 border-rose-500/30",
+  goals: "bg-amber-400/15 text-amber-700 border-amber-400/30",
+  thinking: "bg-sky-500/15 text-sky-700 border-sky-500/30",
+  context: "bg-text/8 text-text/50 border-text/15",
 };
 
 export function ChatView() {
@@ -27,7 +27,6 @@ export function ChatView() {
   );
   const { data: wikiPages, refetch: refetchWiki } = api.wiki.pages.useQuery();
 
-  // Load DB history once
   useEffect(() => {
     if (!historyLoading && history && !hydrated) {
       setMessages(history);
@@ -35,7 +34,6 @@ export function ChatView() {
     }
   }, [history, historyLoading, hydrated]);
 
-  // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -76,7 +74,6 @@ export function ChatView() {
         );
       }
 
-      // Refetch wiki pages after AI finishes updating them
       setTimeout(() => void refetchWiki(), 3000);
     } catch {
       setMessages((prev) =>
@@ -107,10 +104,10 @@ export function ChatView() {
       {/* Wiki stats bar */}
       <button
         onClick={() => setWikiOpen((v) => !v)}
-        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:bg-white/[0.08]"
+        className="flex items-center justify-between rounded-xl border border-text/10 bg-white px-4 py-3 text-left transition hover:bg-text/[0.02]"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-white/60">
+          <span className="text-sm text-text/60">
             {pageCount === 0
               ? "No profile built yet — start chatting"
               : `${pageCount} thing${pageCount === 1 ? "" : "s"} known about you`}
@@ -119,43 +116,43 @@ export function ChatView() {
             Object.entries(categoryCounts).map(([cat, count]) => (
               <span
                 key={cat}
-                className={`rounded-full border px-2 py-0.5 text-xs ${categoryColors[cat] ?? "bg-white/10 text-white/40"}`}
+                className={`rounded-full border px-2 py-0.5 text-xs ${categoryColors[cat] ?? "bg-text/8 text-text/40 border-text/15"}`}
               >
                 {count} {cat}
               </span>
             ))}
         </div>
-        <span className="ml-4 shrink-0 text-xs text-white/30">
+        <span className="ml-4 shrink-0 text-xs text-text/30">
           {wikiOpen ? "hide ↑" : "show ↓"}
         </span>
       </button>
 
       {/* Wiki pages panel */}
       {wikiOpen && wikiPages && wikiPages.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
-          <p className="text-xs font-medium uppercase tracking-widest text-white/30">
+        <div className="flex flex-col gap-3 rounded-xl border border-text/10 bg-white p-4">
+          <p className="text-xs font-medium uppercase tracking-widest text-text/30">
             Your profile
           </p>
           {wikiPages.map((page) => (
             <div
               key={page.slug}
-              className="border-b border-white/5 pb-3 last:border-0 last:pb-0"
+              className="border-b border-text/8 pb-3 last:border-0 last:pb-0"
             >
               <div className="flex items-center gap-2">
                 <span
-                  className={`rounded-full border px-2 py-0.5 text-xs ${categoryColors[page.category] ?? "bg-white/10 text-white/40"}`}
+                  className={`rounded-full border px-2 py-0.5 text-xs ${categoryColors[page.category] ?? "bg-text/8 text-text/40 border-text/15"}`}
                 >
                   {page.category}
                 </span>
-                <span className="text-sm font-medium text-white/80">{page.title}</span>
+                <span className="text-sm font-medium text-text/80">{page.title}</span>
               </div>
-              <p className="mt-1 text-sm leading-relaxed text-white/50">{page.content}</p>
+              <p className="mt-1 text-sm leading-relaxed text-text/50">{page.content}</p>
               {page.tags.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {page.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-white/30"
+                      className="rounded-full bg-text/5 px-2 py-0.5 text-xs text-text/40"
                     >
                       {tag}
                     </span>
@@ -168,11 +165,11 @@ export function ChatView() {
       )}
 
       {/* Messages */}
-      <div className="flex min-h-[400px] flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="flex min-h-[400px] flex-col gap-3 rounded-xl border border-text/10 bg-white p-4">
         {messages.length === 0 && !historyLoading && (
           <div className="m-auto flex max-w-sm flex-col items-center gap-3 text-center">
-            <div className="text-3xl opacity-60">✦</div>
-            <p className="text-white/60">
+            <div className="text-3xl opacity-40">✦</div>
+            <p className="text-text/60">
               This is your reflection space. Ask anything about your patterns, or just
               think out loud — I&apos;ll learn as we talk.
             </p>
@@ -185,7 +182,7 @@ export function ChatView() {
                 <button
                   key={prompt}
                   onClick={() => void sendMessage(prompt)}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/50 transition hover:border-white/20 hover:text-white/70"
+                  className="rounded-full border border-text/10 bg-background px-3 py-1.5 text-sm text-text/50 transition hover:border-text/20 hover:text-text/70"
                 >
                   {prompt}
                 </button>
@@ -202,16 +199,16 @@ export function ChatView() {
             <div
               className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 m.role === "user"
-                  ? "bg-violet-600/40 text-white"
-                  : "bg-white/[0.08] text-white/85"
+                  ? "bg-primary text-white"
+                  : "bg-text/5 text-text/85"
               }`}
             >
               {m.content}
               {m.role === "assistant" && m.content === "" && (
                 <span className="flex gap-1">
-                  <span className="animate-bounce text-white/40" style={{ animationDelay: "0ms" }}>·</span>
-                  <span className="animate-bounce text-white/40" style={{ animationDelay: "150ms" }}>·</span>
-                  <span className="animate-bounce text-white/40" style={{ animationDelay: "300ms" }}>·</span>
+                  <span className="animate-bounce text-text/30" style={{ animationDelay: "0ms" }}>·</span>
+                  <span className="animate-bounce text-text/30" style={{ animationDelay: "150ms" }}>·</span>
+                  <span className="animate-bounce text-text/30" style={{ animationDelay: "300ms" }}>·</span>
                 </span>
               )}
             </div>
@@ -228,12 +225,12 @@ export function ChatView() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Say anything…"
           disabled={streaming}
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-white/25 focus:bg-white/[0.08] disabled:opacity-50"
+          className="flex-1 rounded-xl border border-text/15 bg-white px-4 py-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={streaming || !input.trim()}
-          className="rounded-xl bg-violet-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-500 disabled:opacity-40"
+          className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-white transition hover:bg-primary/90 disabled:opacity-40"
         >
           Send
         </button>

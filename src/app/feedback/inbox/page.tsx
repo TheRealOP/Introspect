@@ -21,24 +21,24 @@ export default function FeedbackInboxPage() {
   const { data, isLoading, error } = api.feedback.list.useQuery();
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 py-16 text-white">
+    <main className="flex min-h-screen flex-col items-center bg-background px-4 py-16">
       <div className="flex w-full max-w-2xl flex-col gap-8">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+            <h1 className="text-4xl font-extrabold tracking-tight text-text sm:text-5xl">
               Inbox
             </h1>
-            <p className="mt-2 text-white/50">All feedback submissions.</p>
+            <p className="mt-2 text-text/50">All feedback submissions.</p>
           </div>
           <Nav />
         </div>
 
         {isLoading && (
-          <p className="text-sm text-white/30">Loading…</p>
+          <p className="text-sm text-text/40">Loading…</p>
         )}
 
         {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
+          <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-700">
             {error.message === "FORBIDDEN"
               ? "You're not authorized to view this page."
               : `Error: ${error.message}`}
@@ -46,7 +46,7 @@ export default function FeedbackInboxPage() {
         )}
 
         {data && data.length === 0 && (
-          <p className="text-sm text-white/30">No feedback yet.</p>
+          <p className="text-sm text-text/40">No feedback yet.</p>
         )}
 
         {data && data.length > 0 && (
@@ -54,30 +54,30 @@ export default function FeedbackInboxPage() {
             {data.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-4"
+                className="flex flex-col gap-3 rounded-xl border border-text/10 bg-white px-5 py-4"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <span className="text-base">
                       {CATEGORY_EMOJI[item.category ?? "other"] ?? "💬"}
                     </span>
-                    <span className="text-xs font-semibold uppercase tracking-widest text-white/30">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-text/40">
                       {item.category ?? "other"}
                     </span>
                   </div>
-                  <span className="text-xs text-white/20">
+                  <span className="text-xs text-text/30">
                     {formatDate(item.createdAt)}
                   </span>
                 </div>
 
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/80">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-text/80">
                   {item.message}
                 </p>
 
                 {item.email && (
                   <a
                     href={`mailto:${item.email}`}
-                    className="self-start text-xs text-violet-400 transition hover:text-violet-300"
+                    className="self-start text-xs text-primary transition hover:text-primary/80"
                   >
                     {item.email}
                   </a>

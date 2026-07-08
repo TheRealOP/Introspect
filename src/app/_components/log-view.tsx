@@ -6,12 +6,12 @@ export function LogView() {
   const { data: entries, isLoading } = api.journal.list.useQuery();
 
   if (isLoading) {
-    return <p className="text-sm text-white/30">Loading check-ins…</p>;
+    return <p className="text-sm text-text/40">Loading check-ins…</p>;
   }
 
   if (!entries || entries.length === 0) {
     return (
-      <p className="text-center text-sm text-white/30">
+      <p className="text-center text-sm text-text/40">
         No check-ins yet. Head to Check in to log your first one.
       </p>
     );
@@ -22,12 +22,12 @@ export function LogView() {
       {entries.map((entry) => (
         <div
           key={entry.id}
-          className="rounded-xl border border-white/10 bg-white/5 p-4"
+          className="rounded-xl border border-text/10 bg-white p-4"
         >
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/90">
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-text/90">
             {entry.content}
           </p>
-          <p className="mt-2 text-xs text-white/30">
+          <p className="mt-2 text-xs text-text/30">
             {entry.createdAt
               ? new Date(entry.createdAt * 1000).toLocaleString()
               : "—"}

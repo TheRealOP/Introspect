@@ -40,9 +40,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
-    session({ session, token }) {
-      session.user.dbUrl = token.dbUrl;
-      session.user.dbAuthToken = token.dbAuthToken;
+    session({ session }) {
+      // Deliberately do NOT copy dbUrl / dbAuthToken onto the session — that
+      // object is serialized to the browser via /api/auth/session. The Turso
+      // credentials stay in the encrypted JWT and are read server-side through
+      // getUserDbCredentials() (src/server/user-db.ts). See audit H1.
       return session;
     },
   },
