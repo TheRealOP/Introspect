@@ -106,7 +106,6 @@
       margin-top: 4px;
     }
 
-    .tag-stub   { background: #fff0f3; color: #ef244e; }
     .tag-done   { background: #14532d; color: #86efac; }
     .tag-future { background: #2d1f3d; color: #d8b4fe; }
     .tag-schema { background: #fff7d8; color: #8a5f00; }
@@ -423,12 +422,31 @@
 
     <div class="row">
       <div class="card accent-amber">
-        <div class="card-title">Drizzle ORM client</div>
+        <div class="card-title">Central users DB</div>
+        <div class="card-sub">
+          <code>src/server/db/users-client.ts</code><br/>
+          Driver: <code>@libsql/client/node</code><br/>
+          URL from <code>USERS_DATABASE_URL</code><br/>
+          Tables: <code>users</code>, <code>verification_tokens</code>, <code>feedback</code><br/>
+          Stores email/password hash, email verification state, and per-user Turso credentials
+        </div>
+      </div>
+      <div class="card accent-amber">
+        <div class="card-title">Per-user app DBs</div>
         <div class="card-sub">
           <code>src/server/db/index.ts</code><br/>
-          Driver: <code>@libsql/client</code> (better-sqlite3-compatible)<br/>
-          URL from <code>env.DATABASE_URL</code><br/>
-          Connection cached in <code>globalThis</code> for HMR
+          One isolated Turso DB per user, provisioned in <code>src/app/api/signup/route.ts</code><br/>
+          <code>createUserDb(url, authToken)</code> returns a Drizzle client and caches by DB URL<br/>
+          Runtime credentials come from the encrypted JWT via <code>src/server/user-db.ts</code>, not from the client session
+        </div>
+      </div>
+      <div class="card accent-amber">
+        <div class="card-title">Lazy user-DB migrations</div>
+        <div class="card-sub">
+          <code>src/server/db/ensure-tables.ts</code><br/>
+          Single source for healing legacy per-user DBs at request time<br/>
+          Creates wiki/chat/push/reminder tables if missing<br/>
+          Adds late settings columns: <code>mode</code>, <code>tier</code>
         </div>
       </div>
       <div class="card accent-amber">
@@ -442,7 +460,7 @@
     </div>
 
     <!-- Schema tables -->
-    <div class="layer-label" style="margin-top: 20px;">Schema — <code>src/server/db/schema.ts</code> &nbsp;<span class="tag tag-done">pushed</span> &nbsp;<span class="tag tag-done">Phase 4 active · 6 tables</span></div>
+    <div class="layer-label" style="margin-top: 20px;">Schema — <code>src/server/db/schema.ts</code> &nbsp;<span class="tag tag-done">active</span> &nbsp;<span class="tag tag-done">11 per-user introspect tables</span></div>
 
     <div class="row">
       <div class="card accent-green" style="min-width: 340px;">
@@ -451,6 +469,7 @@
           <tr><th>column</th><th>type</th><th>notes</th></tr>
           <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
           <tr><td><code>content</code></td><td>TEXT</td><td>NOT NULL · activity check-in text</td></tr>
+          <tr><td><code>plan</code></td><td>TEXT</td><td>committed plan for the next check-in period</td></tr>
           <tr><td><code>createdAt</code></td><td>INTEGER</td><td>unix timestamp · default now</td></tr>
         </table>
       </div>
@@ -521,6 +540,71 @@
           <tr><td><code>updatedAt</code></td><td>INTEGER</td><td>unix timestamp</td></tr>
         </table>
       </div>
+
+      <div class="card accent-green" style="min-width: 380px;">
+        <div class="card-title">chat_messages <code>introspect_chat_messages</code> <span class="tag tag-done">done</span></div>
+        <div class="card-sub" style="margin-bottom:6px;">Persistent coach chat history used by <code>/chat</code>.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
+          <tr><td><code>role</code></td><td>TEXT</td><td>NOT NULL · user | assistant</td></tr>
+          <tr><td><code>content</code></td><td>TEXT</td><td>NOT NULL · message body</td></tr>
+          <tr><td><code>createdAt</code></td><td>INTEGER</td><td>unix timestamp · default now</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-green" style="min-width: 380px;">
+        <div class="card-title">wiki_pages <code>introspect_wiki_pages</code> <span class="tag tag-done">done</span></div>
+        <div class="card-sub" style="margin-bottom:6px;">Wiki-style knowledge graph nodes maintained from chat turns.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>slug</code></td><td>TEXT</td><td>primary key</td></tr>
+          <tr><td><code>title</code></td><td>TEXT</td><td>NOT NULL · display title</td></tr>
+          <tr><td><code>category</code></td><td>TEXT</td><td>identity | habits | blockers | goals | thinking | context</td></tr>
+          <tr><td><code>content</code></td><td>TEXT</td><td>NOT NULL · markdown prose</td></tr>
+          <tr><td><code>tags</code></td><td>TEXT</td><td>JSON string array</td></tr>
+          <tr><td><code>updatedAt</code></td><td>INTEGER</td><td>unix timestamp · default now</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-green" style="min-width: 360px;">
+        <div class="card-title">wiki_edges <code>introspect_wiki_edges</code> <span class="tag tag-done">done</span></div>
+        <div class="card-sub" style="margin-bottom:6px;">Directed graph relationships between wiki pages.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
+          <tr><td class="fk"><code>fromSlug</code></td><td>TEXT</td><td>NOT NULL · source page slug</td></tr>
+          <tr><td class="fk"><code>toSlug</code></td><td>TEXT</td><td>NOT NULL · target page slug</td></tr>
+          <tr><td><code>relation</code></td><td>TEXT</td><td>NOT NULL · blocks/supports/etc.</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-green" style="min-width: 380px;">
+        <div class="card-title">push_subscriptions <code>introspect_push_subscriptions</code> <span class="tag tag-done">done</span></div>
+        <div class="card-sub" style="margin-bottom:6px;">One Web Push subscription row per device/browser.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>primary key (uuid)</td></tr>
+          <tr><td><code>endpoint</code></td><td>TEXT</td><td>NOT NULL · push endpoint</td></tr>
+          <tr><td><code>p256dh</code></td><td>TEXT</td><td>NOT NULL · browser key</td></tr>
+          <tr><td><code>auth</code></td><td>TEXT</td><td>NOT NULL · browser auth secret</td></tr>
+          <tr><td><code>userAgent</code></td><td>TEXT</td><td>device/browser hint</td></tr>
+          <tr><td><code>createdAt</code></td><td>INTEGER</td><td>unix timestamp · default now</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-green" style="min-width: 360px;">
+        <div class="card-title">reminders <code>introspect_reminders</code> <span class="tag tag-done">done</span></div>
+        <div class="card-sub" style="margin-bottom:6px;">Singleton reminder preferences plus last-notified dedupe state.</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>"default"</td></tr>
+          <tr><td><code>enabled</code></td><td>INTEGER</td><td>default 0 · 1 when reminders are on</td></tr>
+          <tr><td><code>intervalHours</code></td><td>INTEGER</td><td>default 3</td></tr>
+          <tr><td><code>lastNotifiedAt</code></td><td>INTEGER</td><td>unix timestamp for cron dedupe</td></tr>
+          <tr><td><code>updatedAt</code></td><td>INTEGER</td><td>unix timestamp</td></tr>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -537,8 +621,9 @@
         <div class="card-title">Vercel AI SDK <span class="tag tag-done">installed</span></div>
         <div class="card-sub">
           <code>ai</code> v6 · <code>@ai-sdk/groq</code> · <code>@ai-sdk/openai</code> · <code>@ai-sdk/anthropic</code> · <code>@ai-sdk/google</code><br/>
-          Default provider: Ollama / <code>llama3.1:8b</code> (privacy-first local default)<br/>
-          Resolution: DB settings row → env → hard default (Ollama)
+          Default hosted provider: Groq / <code>llama-3.3-70b-versatile</code><br/>
+          BYO key in <code>/settings</code> stored in <code>introspect_settings</code><br/>
+          Resolution: DB settings row → env → hard default (Groq)
         </div>
       </div>
       <div class="card accent-pink">
@@ -549,11 +634,12 @@
           <code>resolveAi(db)</code> → returns <code>{ model, mode }</code> in one DB call · preferred entrypoint<br/>
           <code>buildModelFromConfig(config)</code> → switch on provider<br/>
           <code>testConnection(config)</code> → tiny ping to verify config<br/>
-          Supports: hosted (stub) / groq / openai / anthropic / google / ollama / custom<br/>
+          Supports: hosted / groq / openai / anthropic / google / ollama / custom<br/>
           <br/>
           <code>src/server/ai/structured.ts</code> — <b>structured output with auto-fallback</b><br/>
           <code>generateStructured({ model, schema, mode, ... })</code><br/>
           mode "tool" → forced tool call · mode "json" → generateObject · mode "auto" → tool → json → text+parse<br/>
+          Structured-output fallback chain lives here: tool → JSON → text+parse<br/>
           Handles models without tool-calling support (Gemma, small local models)
         </div>
       </div>
@@ -587,10 +673,10 @@
     <div class="layer-label">AI Deep Dive — How It All Works</div>
 
     <!-- ── STEP 0: Provider Factory ── -->
-    <div class="layer-label" style="margin-top: 16px; color: #ec4899;">Step 0 · Provider Factory — <code>src/server/ai/provider.ts</code></div>
-    <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 12px; max-width: 700px;">
-      Both AI flows start here. <code>getModel(db)</code> returns a <code>LanguageModel</code> instance from the Vercel AI SDK.
-      The resolution order is strict: a DB settings row with all three fields wins, then env vars, then the hard default.
+    <div class="layer-label" style="margin-top: 16px; color: #ef244e;">Step 0 · Provider Factory — <code>src/server/ai/provider.ts</code></div>
+    <p style="font-size: 0.75rem; color: rgba(17, 1, 4, 0.66); margin-bottom: 12px; max-width: 700px;">
+      AI flows start here. <code>resolveAi(db)</code> returns a <code>LanguageModel</code> plus structured-output mode from the Vercel AI SDK.
+      The resolution order is strict: a DB settings row wins, then env vars, then the hard default.
     </p>
 
     <div class="arrow-row" style="flex-wrap: nowrap; gap: 0; align-items: stretch;">
@@ -598,7 +684,7 @@
         <div class="card-title">1. DB settings row</div>
         <div class="card-sub">
           <code>introspect_settings</code> id="default"<br/>
-          Wins if <b>provider</b> + <b>model</b> + <b>apiKey</b> are all set<br/>
+          Wins if <b>provider</b> + <b>model</b> are set; <b>apiKey</b> is optional for local/custom cases<br/>
           Set via <code>settings.update()</code> tRPC call<br/>
           <span style="color:#86efac;">→ highest priority</span>
         </div>
@@ -623,7 +709,7 @@
         </div>
       </div>
       <div class="arrow" style="font-size: 1.6rem;">→</div>
-      <div class="card accent-pink" style="min-width: 160px; background: #1a1030;">
+      <div class="card accent-pink" style="min-width: 160px; background: #fff0f3;">
         <div class="card-title">LanguageModel</div>
         <div class="card-sub">
           Opaque SDK handle<br/>
@@ -640,15 +726,16 @@
         <code>openai</code> → <code>@ai-sdk/openai</code> &nbsp;·&nbsp;
         <code>anthropic</code> → <code>@ai-sdk/anthropic</code> &nbsp;·&nbsp;
         <code>google</code> → <code>@ai-sdk/google</code> &nbsp;·&nbsp;
-        <code>custom</code> → <code>@ai-sdk/openai</code> with custom <code>baseURL</code> (Ollama, OpenRouter, etc.)
+        <code>ollama</code> → <code>@ai-sdk/openai</code> with local <code>baseURL</code> &nbsp;·&nbsp;
+        <code>custom</code> → <code>@ai-sdk/openai</code> with custom <code>baseURL</code> (OpenRouter, LM Studio, etc.)
       </div>
     </div>
 
-    <hr style="margin: 24px 0; border-color: #1e2330;" />
+    <hr style="margin: 24px 0; border-color: rgba(17, 1, 4, 0.1);" />
 
     <!-- ── FLOW 1: Entry Analysis ── -->
-    <div class="layer-label" style="color: #a855f7;">Flow 1 · Entry Analysis — triggered by <code>journal.analyze</code></div>
-    <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 14px; max-width: 700px;">
+    <div class="layer-label" style="color: #f5b37b;">Flow 1 · Entry Analysis — triggered by <code>journal.analyze</code></div>
+    <p style="font-size: 0.75rem; color: rgba(17, 1, 4, 0.66); margin-bottom: 14px; max-width: 700px;">
       Runs once per check-in, after the user submits text. Extracts behavioral habits and generates 4 micro-action nudges.
     </p>
 
@@ -671,7 +758,7 @@
           Fetch <b>this entry</b> content from DB<br/>
           Fetch <b>last 5 previous entries</b> (ordered ascending → context window)<br/>
           Fetch <b>last 10 selected nudges</b> (user's revealed preferences)<br/>
-          Call <code>getModel(db)</code> → <code>LanguageModel</code>
+          Call <code>resolveAi(db)</code> → <code>{ model, mode }</code>
         </div>
       </div>
 
@@ -680,10 +767,9 @@
       <div class="card accent-pink" style="min-width: 260px;">
         <div class="card-title">③ <code>extractFromEntry()</code> — <code>src/server/ai/extract.ts</code></div>
         <div class="card-sub">
-          Uses <code>generateText</code> (Vercel AI SDK v6)<br/>
-          <b>Tool-calling pattern</b> — not JSON mode<br/>
-          <code>toolChoice: { type: "tool", toolName: "extract" }</code><br/>
-          Forces the model to call the <code>extract</code> tool every time<br/>
+          Delegates to <code>generateStructured()</code> (Vercel AI SDK v6)<br/>
+          Mode comes from settings: <code>auto</code>, <code>tool</code>, or <code>json</code><br/>
+          <code>auto</code> tries forced tool call, then JSON mode, then text+JSON parse<br/>
           Temperature: <b>0.2</b> (very deterministic)<br/><br/>
           <b>System prompt</b>: behavioral coach, strict nudge rules (4 types: physical, close-the-loop, sensory reset, tiny progress)<br/>
           <b>User prompt</b>: previous entries (oldest-first) + past selected nudges + latest entry<br/><br/>
@@ -715,18 +801,17 @@
     <div class="card accent-gray" style="margin-top: 12px; max-width: 700px;">
       <div class="card-title">Why tool-calling instead of JSON mode?</div>
       <div class="card-sub">
-        Groq models don't support <code>response_format: json_schema</code>. Tool-calling (function-calling) is the universal alternative:
-        the model is given a tool with a Zod schema as its <code>inputSchema</code>, then forced to call it via <code>toolChoice</code>.
-        The structured output lands in <code>toolCalls[0].input</code> — fully typed, validated by Zod. No prompt-engineering hacks needed.
-        This works identically across Groq, OpenAI, Anthropic, and Google.
+        Some providers/models reject strict JSON schema or tool calls. <code>src/server/ai/structured.ts</code> centralizes that variability:
+        mode <code>tool</code> forces a Zod-backed tool call, mode <code>json</code> uses <code>generateObject</code>, and mode <code>auto</code>
+        falls back from tool → JSON → text+parse. Routers stay provider-agnostic.
       </div>
     </div>
 
-    <hr style="margin: 24px 0; border-color: #1e2330;" />
+    <hr style="margin: 24px 0; border-color: rgba(17, 1, 4, 0.1);" />
 
     <!-- ── FLOW 2: Profile Generation ── -->
     <div class="layer-label" style="color: #14b8a6;">Flow 2 · Profile Generation — triggered by <code>insights.refresh</code></div>
-    <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 14px; max-width: 700px;">
+    <p style="font-size: 0.75rem; color: rgba(17, 1, 4, 0.66); margin-bottom: 14px; max-width: 700px;">
       Builds (or rebuilds) a single cached "knowledge-graph profile" of the user. Runs on demand — user clicks Refresh on the Insights page.
       The profile is a singleton row (id = "default") in <code>introspect_profile</code>.
     </p>
@@ -761,7 +846,7 @@
       <div class="card accent-pink" style="min-width: 270px;">
         <div class="card-title">③ <code>buildInsights()</code> — <code>src/server/ai/insights.ts</code></div>
         <div class="card-sub">
-          Same tool-calling pattern as extract<br/>
+          Same <code>generateStructured()</code> path as extraction<br/>
           Temperature: <b>0.2</b><br/><br/>
           <b>System prompt</b>: behavioral scientist, tag rules<br/>
           <b>User prompt</b>: habits block (name, sentiment, occurrences, current streak, longest streak) + recent check-ins + top picked nudges with counts<br/><br/>
@@ -794,10 +879,10 @@
 
     </div>
 
-    <hr style="margin: 24px 0; border-color: #1e2330;" />
+    <hr style="margin: 24px 0; border-color: rgba(17, 1, 4, 0.1);" />
 
     <!-- ── STALENESS ── -->
-    <div class="layer-label" style="color: #f59e0b;">Staleness Detection</div>
+    <div class="layer-label" style="color: #8a5f00;">Staleness Detection</div>
     <div class="row">
       <div class="card accent-amber" style="min-width: 320px;">
         <div class="card-title">How <code>isStale</code> works</div>
@@ -821,7 +906,7 @@
       </div>
     </div>
 
-    <hr style="margin: 24px 0; border-color: #1e2330;" />
+    <hr style="margin: 24px 0; border-color: rgba(17, 1, 4, 0.1);" />
 
     <!-- ── STREAK ALGORITHM ── -->
     <div class="layer-label" style="color: #22c55e;">Streak Algorithm — <code>computeStreaks()</code> in <code>insights.ts</code></div>
@@ -833,7 +918,7 @@
         3. Walk the sorted days: if <code>curr - prev == 1 day</code>, extend run; else reset run to 1<br/>
         4. Track <code>longest</code> = max run seen<br/>
         5. <b>Current streak</b>: if the last recorded day is today or yesterday → return current run; else 0<br/>
-        <span style="color: #fbbf24;">Why yesterday?</span> A user who logged yesterday but not yet today shouldn't lose their streak mid-day.
+        <span style="color: #8a5f00;">Why yesterday?</span> A user who logged yesterday but not yet today shouldn't lose their streak mid-day.
       </div>
     </div>
 
@@ -848,16 +933,20 @@
     <div class="layer-label">Env &amp; Config — <code>src/env.js</code> (t3-env validated)</div>
     <div class="env-row"><span class="env-key">AUTH_SECRET</span><span class="env-val">required · NextAuth v5 JWT signing key (generate: openssl rand -base64 32)</span></div>
     <div class="env-row"><span class="env-key">USERS_DATABASE_URL</span><span class="env-val">required · central users DB · file:./users.db (dev) or libsql://…turso.io (prod)</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">USERS_DATABASE_AUTH_TOKEN</span><span class="env-val">optional · Turso auth token for users DB (required for remote URL)</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">TURSO_API_TOKEN</span><span class="env-val">optional · Turso Platform API token for provisioning per-user DBs (prod)</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">TURSO_ORGANIZATION</span><span class="env-val">optional · Turso org slug (prod)</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">USERS_DATABASE_AUTH_TOKEN</span><span class="env-val">optional · Turso auth token for users DB (required for remote URL)</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">TURSO_API_TOKEN</span><span class="env-val">optional · Turso Platform API token for provisioning per-user DBs (prod)</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">TURSO_ORGANIZATION</span><span class="env-val">optional · Turso org slug (prod)</span></div>
     <div class="env-row"><span class="env-key">NODE_ENV</span><span class="env-val">development / test / production</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">DATABASE_URL</span><span class="env-val">optional · used only by drizzle.config.ts for db:push (not used at runtime)</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">GROQ_API_KEY</span><span class="env-val">optional · default AI provider key</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">AI_PROVIDER</span><span class="env-val">optional · groq | openai | anthropic | google | custom</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">AI_MODEL</span><span class="env-val">optional · model ID override</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">AI_BASE_URL</span><span class="env-val">optional · OpenAI-compatible endpoint (Ollama, OpenRouter, etc.)</span></div>
-    <div class="env-row"><span class="env-key" style="color:#94a3b8;">OPENAI_API_KEY / ANTHROPIC_API_KEY / GOOGLE_GENERATIVE_AI_API_KEY</span><span class="env-val">optional · per-provider keys</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">DATABASE_URL</span><span class="env-val">optional · used only by drizzle.config.ts for db:push (not used at runtime)</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">GROQ_API_KEY</span><span class="env-val">optional · default AI provider key</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">AI_PROVIDER</span><span class="env-val">optional · groq | openai | anthropic | google | custom</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">AI_MODEL</span><span class="env-val">optional · model ID override</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">AI_BASE_URL</span><span class="env-val">optional · OpenAI-compatible endpoint (Ollama, OpenRouter, etc.)</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">OPENAI_API_KEY / ANTHROPIC_API_KEY / GOOGLE_GENERATIVE_AI_API_KEY</span><span class="env-val">optional · per-provider keys</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">EMAIL_FROM / RESEND_API_KEY</span><span class="env-val">optional · email verification sender; logs verification link locally if unset</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY</span><span class="env-val">optional · Web Push credentials for reminders</span></div>
+    <div class="env-row"><span class="env-key" style="color:rgba(17, 1, 4, 0.58);">CRON_SECRET</span><span class="env-val">optional · protects <code>/api/cron/reminders</code> when configured</span></div>
+    <div class="env-row"><span class="env-key">Tailwind v4 tokens</span><span class="env-val"><code>src/styles/globals.css</code> defines text #110104 · background #fffafb · primary #ef244e · secondary #f5b37b · accent #f2c54f</span></div>
   </div>
 
   <hr />
@@ -870,47 +959,66 @@
     <div class="row">
       <div class="card accent-sky" style="min-width: 500px;">
         <div class="card-sub" style="line-height: 2;">
-          <code>src/middleware.ts</code> &nbsp;—&nbsp; route protection · redirects unauthenticated requests to /auth/signin <span class="tag tag-done">Phase 5</span><br/>
-          <code>src/server/auth.ts</code> &nbsp;—&nbsp; NextAuth v5 config · Credentials provider · JWT callbacks · dbUrl/dbAuthToken in session <span class="tag tag-done">Phase 5</span><br/>
-          <code>src/server/db/users-client.ts</code> &nbsp;—&nbsp; central users DB client · getUserByEmail · createUser · initUsersDb <span class="tag tag-done">Phase 5</span><br/>
+          <code>src/middleware.ts</code> &nbsp;—&nbsp; route protection; public whitelist: auth/signup/verify/cron/feedback/PWA assets <span class="tag tag-done">2026-07-07</span><br/>
+          <code>src/server/auth.ts</code> &nbsp;—&nbsp; NextAuth v5 config · Credentials provider · emailVerified gate · JWT-only dbUrl/dbAuthToken <span class="tag tag-done">Phase 5</span><br/>
+          <code>src/server/user-db.ts</code> &nbsp;—&nbsp; decrypts JWT to read per-user Turso creds server-side; stripped from client session <span class="tag tag-done">2026-07-07</span><br/>
+          <code>src/server/db/users-client.ts</code> &nbsp;—&nbsp; central users DB client · users · verification_tokens · feedback · listUsers for cron <span class="tag tag-done">Phase 5</span><br/>
           <code>src/server/turso.ts</code> &nbsp;—&nbsp; provisionUserDb() · Turso Platform API · local file fallback in dev <span class="tag tag-done">Phase 5</span><br/>
-          <code>src/types/next-auth.d.ts</code> &nbsp;—&nbsp; Session / JWT type extensions (dbUrl, dbAuthToken) <span class="tag tag-done">Phase 5</span><br/>
+          <code>src/types/next-auth.d.ts</code> &nbsp;—&nbsp; JWT type extensions include dbUrl/dbAuthToken; Session intentionally does not <span class="tag tag-done">2026-07-07</span><br/>
           <code>src/app/auth/signin/page.tsx</code> &nbsp;—&nbsp; <code>/auth/signin</code> sign-in form <span class="tag tag-done">Phase 5</span><br/>
           <code>src/app/auth/signup/page.tsx</code> &nbsp;—&nbsp; <code>/auth/signup</code> sign-up form <span class="tag tag-done">Phase 5</span><br/>
+          <code>src/app/auth/verify/page.tsx</code> &nbsp;—&nbsp; verification pending / resend UI <span class="tag tag-done">Phase 5</span><br/>
           <code>src/app/api/auth/[...nextauth]/route.ts</code> &nbsp;—&nbsp; NextAuth handler <span class="tag tag-done">Phase 5</span><br/>
-          <code>src/app/api/signup/route.ts</code> &nbsp;—&nbsp; POST /api/signup · provisions Turso DB + seeds schema + creates user record <span class="tag tag-done">Phase 5</span><br/>
+          <code>src/app/api/signup/route.ts</code> &nbsp;—&nbsp; POST /api/signup · provisions Turso DB + seeds schema + creates user + verification token <span class="tag tag-done">Phase 5</span><br/>
+          <code>src/app/api/verify/route.ts</code> &nbsp;—&nbsp; consumes verification token and marks email verified <span class="tag tag-done">Phase 5</span><br/>
+          <code>src/app/api/verify/resend/route.ts</code> &nbsp;—&nbsp; resends verification email/link <span class="tag tag-done">Phase 5</span><br/>
           <code>src/app/page.tsx</code> &nbsp;—&nbsp; <code>/</code> check-in RSC shell <span class="tag tag-done">done</span><br/>
           <code>src/app/habits/page.tsx</code> &nbsp;—&nbsp; <code>/habits</code> RSC shell <span class="tag tag-done">done</span><br/>
           <code>src/app/log/page.tsx</code> &nbsp;—&nbsp; <code>/log</code> RSC shell <span class="tag tag-done">done</span><br/>
           <code>src/app/insights/page.tsx</code> &nbsp;—&nbsp; <code>/insights</code> RSC shell <span class="tag tag-done">done</span><br/>
+          <code>src/app/chat/page.tsx</code> &nbsp;—&nbsp; <code>/chat</code> streaming coach + wiki graph RSC shell <span class="tag tag-done">done</span><br/>
+          <code>src/app/settings/page.tsx</code> &nbsp;—&nbsp; <code>/settings</code> AI provider + reminders RSC shell <span class="tag tag-done">done</span><br/>
+          <code>src/app/feedback/page.tsx</code> &nbsp;—&nbsp; public feedback form <span class="tag tag-done">done</span><br/>
+          <code>src/app/feedback/inbox/page.tsx</code> &nbsp;—&nbsp; admin feedback inbox <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/nav.tsx</code> &nbsp;—&nbsp; shared nav bar with active-link highlight <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/journal.tsx</code> &nbsp;—&nbsp; textarea + nudge picker (log/habits extracted) <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/habits-view.tsx</code> &nbsp;—&nbsp; habits list + inline edit/delete <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/log-view.tsx</code> &nbsp;—&nbsp; check-in history display <span class="tag tag-done">done</span><br/>
-          <code>src/app/_components/insights.tsx</code> &nbsp;—&nbsp; streaks + AI profile + nudge stats + AI settings <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/insights.tsx</code> &nbsp;—&nbsp; streaks + AI profile + nudge stats + settings link <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/reminder-settings.tsx</code> &nbsp;—&nbsp; Web Push subscription + reminder settings <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/chat-view.tsx</code> &nbsp;—&nbsp; streaming chat UI + wiki drawer <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/feedback-form.tsx</code> &nbsp;—&nbsp; feedback form UI <span class="tag tag-done">done</span><br/>
           <code>src/app/layout.tsx</code> &nbsp;—&nbsp; root layout (fonts, globals)<br/>
+          <code>src/styles/globals.css</code> &nbsp;—&nbsp; Tailwind v4 theme tokens for flat palette <span class="tag tag-done">2026-07-07</span><br/>
           <code>src/app/api/trpc/[trpc]/route.ts</code> &nbsp;—&nbsp; tRPC HTTP endpoint<br/>
+          <code>src/app/api/chat/route.ts</code> &nbsp;—&nbsp; streaming chat route; reads JWT-only DB creds and updates wiki in background <span class="tag tag-done">done</span><br/>
+          <code>src/app/api/feedback/route.ts</code> &nbsp;—&nbsp; anonymous/authenticated feedback intake <span class="tag tag-done">done</span><br/>
+          <code>src/app/api/cron/reminders/route.ts</code> &nbsp;—&nbsp; hourly reminder sender across central user list <span class="tag tag-done">done</span><br/>
           <code>src/server/api/trpc.ts</code> &nbsp;—&nbsp; context + middleware + procedure factories<br/>
           <code>src/server/api/root.ts</code> &nbsp;—&nbsp; appRouter: journal · habits · insights · settings · wiki · push · reminders · feedback<br/>
           <code>src/server/ai/provider.ts</code> &nbsp;—&nbsp; AI provider factory (DB → env → Groq default) <span class="tag tag-done">Phase 4</span><br/>
-          <code>src/server/ai/extract.ts</code> &nbsp;—&nbsp; habit extraction via tool-calling + Zod <span class="tag tag-done">Phase 3+4</span><br/>
+          <code>src/server/ai/structured.ts</code> &nbsp;—&nbsp; structured-output fallback chain: tool → JSON → text+parse <span class="tag tag-done">2026-07-07</span><br/>
+          <code>src/server/ai/extract.ts</code> &nbsp;—&nbsp; habit extraction via generateStructured + Zod <span class="tag tag-done">Phase 3+4</span><br/>
           <code>src/server/ai/insights.ts</code> &nbsp;—&nbsp; buildInsights() — 5-tag knowledge graph + suggestions <span class="tag tag-done">Phase 4</span><br/>
+          <code>src/server/ai/chat.ts</code> &nbsp;—&nbsp; chat prompt + wiki ops extraction <span class="tag tag-done">done</span><br/>
           <code>src/server/api/routers/journal.ts</code> &nbsp;—&nbsp; create · list · analyze · analyzeAll · selectNudge · nudgesByEntry <span class="tag tag-done">done</span><br/>
           <code>src/server/api/routers/habits.ts</code> &nbsp;—&nbsp; list · updateSentiment · delete <span class="tag tag-done">done</span><br/>
           <code>src/server/api/routers/insights.ts</code> &nbsp;—&nbsp; streaks · nudgeStats · get · refresh <span class="tag tag-done">Phase 4</span><br/>
-          <code>src/server/api/routers/settings.ts</code> &nbsp;—&nbsp; get · update · clear <span class="tag tag-done">Phase 4</span><br/>
-          <code>src/server/user-db.ts</code> &nbsp;—&nbsp; reads per-user Turso creds from the JWT (never sent to browser) <span class="tag tag-done">2026-07-07</span><br/>
+          <code>src/server/api/routers/settings.ts</code> &nbsp;—&nbsp; get · update · testConnection · clear <span class="tag tag-done">Phase 4</span><br/>
+          <code>src/server/api/routers/wiki.ts</code> &nbsp;—&nbsp; pages · edges · page · chatHistory <span class="tag tag-done">done</span><br/>
+          <code>src/server/api/routers/push.ts</code> &nbsp;—&nbsp; subscribe · unsubscribe · status <span class="tag tag-done">done</span><br/>
+          <code>src/server/api/routers/reminders.ts</code> &nbsp;—&nbsp; get · update reminder singleton <span class="tag tag-done">done</span><br/>
+          <code>src/server/api/routers/feedback.ts</code> &nbsp;—&nbsp; admin feedback list <span class="tag tag-done">done</span><br/>
           <code>src/server/db/ensure-tables.ts</code> &nbsp;—&nbsp; single source of lazy user-DB migrations (tables + columns) <span class="tag tag-done">2026-07-07</span><br/>
-          <code>src/middleware.ts</code> &nbsp;—&nbsp; auth gate; public: auth/signup/verify/cron/feedback/PWA assets <span class="tag tag-done">2026-07-07</span><br/>
           <code>vercel.json</code> &nbsp;—&nbsp; Vercel Cron → /api/cron/reminders hourly <span class="tag tag-done">2026-07-07</span><br/>
-          <code>src/server/db/index.ts</code> &nbsp;—&nbsp; Drizzle client + libsql connection<br/>
+          <code>src/server/db/index.ts</code> &nbsp;—&nbsp; Drizzle client factory + libsql connection cache<br/>
           <code>src/server/db/schema.ts</code> &nbsp;—&nbsp; 11 tables: entries · habits · nudges · habit_occurrences · settings · profile · chat_messages · wiki_pages · wiki_edges · push_subscriptions · reminders <span class="tag tag-done">done</span><br/>
           <code>src/trpc/react.tsx</code> &nbsp;—&nbsp; client-side tRPC + React Query provider<br/>
           <code>src/trpc/server.ts</code> &nbsp;—&nbsp; server-side tRPC caller<br/>
           <code>src/env.js</code> &nbsp;—&nbsp; t3-env: all AI provider keys optional, AI_PROVIDER/MODEL/BASE_URL added <span class="tag tag-done">Phase 4</span><br/>
           <code>drizzle.config.ts</code> &nbsp;—&nbsp; Drizzle Kit config (tablesFilter: introspect_*)<br/>
           <code>.env</code> &nbsp;—&nbsp; local secrets (gitignored)<br/>
-          <code>db.sqlite</code> &nbsp;—&nbsp; local SQLite file <span class="tag tag-done">created</span>
+          <code>users.db</code> / <code>user-*.sqlite</code> &nbsp;—&nbsp; local development DB files (gitignored)
         </div>
       </div>
     </div>
@@ -934,7 +1042,7 @@
         </div>
       </div>
 
-      <div class="arrow" style="font-size:1.4rem; color:#334155; align-self:center;">←</div>
+      <div class="arrow" style="font-size:1.4rem; color:rgba(17, 1, 4, 0.35); align-self:center;">←</div>
       <div class="arrow-label" style="align-self:center;">PR when phase ships</div>
 
       <div class="card accent-sky" style="min-width: 160px;">
@@ -946,7 +1054,7 @@
         </div>
       </div>
 
-      <div class="arrow" style="font-size:1.4rem; color:#334155; align-self:center;">←</div>
+      <div class="arrow" style="font-size:1.4rem; color:rgba(17, 1, 4, 0.35); align-self:center;">←</div>
       <div class="arrow-label" style="align-self:center;">PR per feature</div>
 
       <div class="card accent-green" style="min-width: 200px;">
@@ -978,7 +1086,7 @@
 
     <div class="layer-label" style="margin-top: 20px;">Starting a new phase</div>
     <div class="card accent-gray" style="min-width: 420px; margin-top: 4px;">
-      <div class="card-sub" style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; line-height: 2; color: #7dd3fc;">
+      <div class="card-sub" style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; line-height: 2; color: #ef244e;">
         git checkout develop<br/>
         git pull origin develop<br/>
         git checkout -b feature/phase-2-journal-entry
