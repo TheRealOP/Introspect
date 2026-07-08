@@ -62,7 +62,7 @@ export function ReminderSettings() {
   // iOS but not installed as PWA — show install prompt
   if (isIos() && !isStandalone()) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-xl border border-glass-border bg-glass-bg p-5">
         <div className="mb-3 flex items-center gap-2">
           <span className="text-lg">🔔</span>
           <h3 className="font-semibold text-white">Check-in Reminders</h3>
@@ -92,7 +92,7 @@ export function ReminderSettings() {
   // Browser doesn't support Web Push at all
   if (!supportsWebPush()) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-xl border border-glass-border bg-glass-bg p-5">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">🔔</span>
           <h3 className="font-semibold text-white">Check-in Reminders</h3>
@@ -172,7 +172,7 @@ export function ReminderSettings() {
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+    <div className="rounded-xl border border-glass-border bg-glass-bg p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">🔔</span>
@@ -188,8 +188,8 @@ export function ReminderSettings() {
         <button
           onClick={handleToggle}
           disabled={saving}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 ${
-            enabled ? "bg-purple-600" : "bg-white/20"
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary-hover focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 ${
+            enabled ? "bg-brand-primary" : "bg-white/20"
           }`}
           aria-label={enabled ? "Disable reminders" : "Enable reminders"}
         >
@@ -209,7 +209,7 @@ export function ReminderSettings() {
             value={intervalHours}
             onChange={(e) => handleIntervalChange(Number(e.target.value))}
             disabled={saving}
-            className="rounded-lg border border-white/20 bg-white/10 px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+            className="rounded-lg border border-glass-border bg-glass-bg px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-primary-hover disabled:opacity-50"
           >
             {[1, 2, 3, 4, 6, 8, 12, 24].map((h) => (
               <option key={h} value={h} className="bg-[#15162c] text-white">

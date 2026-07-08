@@ -74,14 +74,14 @@ function VerifyContent() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-white/30 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
+            className="rounded-lg border border-glass-border bg-glass-bg px-4 py-2.5 text-white placeholder-white/30 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
             placeholder="you@example.com"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-violet-600 px-4 py-2.5 font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50"
+          className="rounded-lg bg-brand-primary px-4 py-2.5 font-semibold text-white transition hover:bg-brand-primary-hover disabled:opacity-50"
         >
           {loading ? "Sending…" : "Send new verification link"}
         </button>
@@ -98,7 +98,7 @@ function VerifyContent() {
 
 export default function VerifyPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 text-white">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-brand-bg px-4 text-white">
       <Suspense fallback={null}>
         <VerifyContent />
       </Suspense>

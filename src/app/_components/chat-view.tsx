@@ -6,7 +6,7 @@ import { api } from "~/trpc/react";
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
 const categoryColors: Record<string, string> = {
-  identity: "bg-violet-500/20 text-violet-300 border-violet-500/30",
+  identity: "bg-brand-primary/20 text-brand-primary-hover border-brand-primary/30",
   habits: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
   blockers: "bg-rose-500/20 text-rose-300 border-rose-500/30",
   goals: "bg-amber-500/20 text-amber-300 border-amber-500/30",
@@ -107,7 +107,7 @@ export function ChatView() {
       {/* Wiki stats bar */}
       <button
         onClick={() => setWikiOpen((v) => !v)}
-        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:bg-white/[0.08]"
+        className="flex items-center justify-between rounded-xl border border-glass-border bg-glass-bg px-4 py-3 text-left transition hover:bg-white/[0.08]"
       >
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-white/60">
@@ -132,7 +132,7 @@ export function ChatView() {
 
       {/* Wiki pages panel */}
       {wikiOpen && wikiPages && wikiPages.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-glass-border bg-glass-bg p-4">
           <p className="text-xs font-medium uppercase tracking-widest text-white/30">
             Your profile
           </p>
@@ -155,7 +155,7 @@ export function ChatView() {
                   {page.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-white/30"
+                      className="rounded-full bg-glass-bg px-2 py-0.5 text-xs text-white/30"
                     >
                       {tag}
                     </span>
@@ -168,7 +168,7 @@ export function ChatView() {
       )}
 
       {/* Messages */}
-      <div className="flex min-h-[400px] flex-col gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="flex min-h-[400px] flex-col gap-3 rounded-xl border border-glass-border bg-glass-bg p-4">
         {messages.length === 0 && !historyLoading && (
           <div className="m-auto flex max-w-sm flex-col items-center gap-3 text-center">
             <div className="text-3xl opacity-60">✦</div>
@@ -185,7 +185,7 @@ export function ChatView() {
                 <button
                   key={prompt}
                   onClick={() => void sendMessage(prompt)}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/50 transition hover:border-white/20 hover:text-white/70"
+                  className="rounded-full border border-glass-border bg-glass-bg px-3 py-1.5 text-sm text-white/50 transition hover:border-white/20 hover:text-white/70"
                 >
                   {prompt}
                 </button>
@@ -202,7 +202,7 @@ export function ChatView() {
             <div
               className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 m.role === "user"
-                  ? "bg-violet-600/40 text-white"
+                  ? "bg-brand-primary/40 text-white"
                   : "bg-white/[0.08] text-white/85"
               }`}
             >
@@ -228,12 +228,12 @@ export function ChatView() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Say anything…"
           disabled={streaming}
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-white/25 focus:bg-white/[0.08] disabled:opacity-50"
+          className="flex-1 rounded-xl border border-glass-border bg-glass-bg px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-white/25 focus:bg-white/[0.08] disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={streaming || !input.trim()}
-          className="rounded-xl bg-violet-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-500 disabled:opacity-40"
+          className="rounded-xl bg-brand-primary px-5 py-3 text-sm font-medium text-white transition hover:bg-brand-primary-hover disabled:opacity-40"
         >
           Send
         </button>

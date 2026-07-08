@@ -20,7 +20,7 @@ const sentiments = ["positive", "neutral", "negative"] as const;
 const sentimentButton: Record<string, string> = {
   positive: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
   negative: "border-rose-500/40 bg-rose-500/10 text-rose-300",
-  neutral: "border-white/20 bg-white/5 text-white/50",
+  neutral: "border-white/20 bg-glass-bg text-white/50",
 };
 
 export function HabitsView() {
@@ -58,7 +58,7 @@ export function HabitsView() {
       {allHabits.map((h) => (
         <div
           key={h.id}
-          className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-4"
+          className="flex flex-col gap-3 rounded-xl border border-glass-border bg-glass-bg px-4 py-4"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
@@ -108,7 +108,7 @@ export function HabitsView() {
                     className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
                       h.sentiment === s
                         ? sentimentButton[s]
-                        : "border-white/10 bg-white/5 text-white/40 hover:border-white/20 hover:text-white/60"
+                        : "border-glass-border bg-glass-bg text-white/40 hover:border-white/20 hover:text-white/60"
                     }`}
                   >
                     {s}

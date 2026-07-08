@@ -5,7 +5,7 @@ import { Nav } from "../_components/nav";
 export default function HabitsPage() {
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 py-16 text-white">
+      <main className="flex min-h-screen flex-col items-center bg-brand-bg px-4 py-16 text-white">
         <div className="flex w-full max-w-2xl flex-col gap-8">
           <div className="flex items-start justify-between">
             <div>

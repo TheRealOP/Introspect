@@ -108,7 +108,7 @@ export function JournalEditor() {
       {/* ------------------------------------------------------------------ */}
       <div className="flex flex-col gap-3">
         <textarea
-          className="min-h-[140px] w-full resize-none rounded-xl border border-white/10 bg-white/5 p-4 text-white placeholder-white/30 outline-none focus:border-white/25 focus:ring-0"
+          className="min-h-[140px] w-full resize-none rounded-xl border border-glass-border bg-glass-bg p-4 text-white placeholder-white/30 outline-none focus:border-white/25 focus:ring-0"
           placeholder="What have you done since your last check-in?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -123,7 +123,7 @@ export function JournalEditor() {
               <button
                 onClick={() => analyzeAll.mutate()}
                 disabled={analyzeAll.isPending}
-                className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/50 transition hover:border-white/20 hover:text-white/70 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg border border-glass-border px-4 py-2 text-sm text-white/50 transition hover:border-white/20 hover:text-white/70 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {analyzeAll.isPending ? "Analyzing all…" : "Analyze all entries"}
               </button>
@@ -131,7 +131,7 @@ export function JournalEditor() {
             <button
               onClick={handleSave}
               disabled={isAnalyzing || !content.trim()}
-              className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-brand-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
             >
               {create.isPending
                 ? "Logging…"
@@ -203,7 +203,7 @@ export function JournalEditor() {
                       });
                     }}
                     disabled={isSaving}
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 text-left text-sm leading-relaxed text-white/70 transition hover:border-indigo-400/30 hover:bg-indigo-400/5 hover:text-white/90 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl border border-glass-border bg-glass-bg p-4 text-left text-sm leading-relaxed text-white/70 transition hover:border-indigo-400/30 hover:bg-indigo-400/5 hover:text-white/90 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {plan.action}
                   </button>
@@ -214,7 +214,7 @@ export function JournalEditor() {
               {!showCustomInput ? (
                 <button
                   onClick={() => setShowCustomInput(true)}
-                  className="self-start rounded-lg border border-white/10 px-4 py-2 text-sm text-white/40 transition hover:border-white/20 hover:text-white/60"
+                  className="self-start rounded-lg border border-glass-border px-4 py-2 text-sm text-white/40 transition hover:border-white/20 hover:text-white/60"
                 >
                   + Write my own plan
                 </button>
@@ -222,7 +222,7 @@ export function JournalEditor() {
                 <div className="flex flex-col gap-2">
                   <textarea
                     autoFocus
-                    className="min-h-[80px] w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-white/30 outline-none focus:border-indigo-400/40 focus:ring-0"
+                    className="min-h-[80px] w-full resize-none rounded-xl border border-glass-border bg-glass-bg p-3 text-sm text-white placeholder-white/30 outline-none focus:border-indigo-400/40 focus:ring-0"
                     placeholder="e.g. Finish the auth flow, then take a 15-min walk before dinner."
                     value={customPlan}
                     onChange={(e) => setCustomPlan(e.target.value)}
@@ -235,7 +235,7 @@ export function JournalEditor() {
                     <button
                       onClick={handleCommitCustomPlan}
                       disabled={!customPlan.trim() || isSaving}
-                      className="rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg bg-brand-primary px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {isSaving ? "Saving…" : "Commit plan"}
                     </button>
@@ -256,7 +256,7 @@ export function JournalEditor() {
 
           {/* Habits extracted from this entry */}
           {analysisResult.habits.length > 0 && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="rounded-xl border border-glass-border bg-glass-bg p-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/40">
                 Habits spotted this check-in
               </p>
@@ -264,7 +264,7 @@ export function JournalEditor() {
                 {analysisResult.habits.map((h) => (
                   <span
                     key={h.name}
-                    className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80"
+                    className="flex items-center gap-1.5 rounded-full border border-glass-border bg-glass-bg px-3 py-1 text-xs text-white/80"
                   >
                     <span
                       className={`h-2 w-2 rounded-full ${sentimentDot[h.sentiment] ?? "bg-white/30"}`}

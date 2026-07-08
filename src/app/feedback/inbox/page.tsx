@@ -21,7 +21,7 @@ export default function FeedbackInboxPage() {
   const { data, isLoading, error } = api.feedback.list.useQuery();
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 py-16 text-white">
+    <main className="flex min-h-screen flex-col items-center bg-brand-bg px-4 py-16 text-white">
       <div className="flex w-full max-w-2xl flex-col gap-8">
         <div className="flex items-start justify-between">
           <div>
@@ -54,7 +54,7 @@ export default function FeedbackInboxPage() {
             {data.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-4"
+                className="flex flex-col gap-3 rounded-xl border border-glass-border bg-glass-bg px-5 py-4"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">

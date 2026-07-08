@@ -22,7 +22,7 @@ export function LogView() {
       {entries.map((entry) => (
         <div
           key={entry.id}
-          className="rounded-xl border border-white/10 bg-white/5 p-4"
+          className="rounded-xl border border-glass-border bg-glass-bg p-4"
         >
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/90">
             {entry.content}

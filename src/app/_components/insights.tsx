@@ -52,7 +52,7 @@ export function InsightsView() {
     <div className="flex w-full max-w-2xl flex-col gap-8">
 
       {/* ── AI provider banner ── */}
-      <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+      <div className="flex items-center justify-between rounded-xl border border-glass-border bg-glass-bg px-4 py-3">
         <p className="text-xs text-white/40">
           {currentSettings
             ? <>AI: <span className="text-white/60">{currentSettings.provider} / {currentSettings.model}</span></>
@@ -89,7 +89,7 @@ export function InsightsView() {
               return (
                 <div
                   key={h.id}
-                  className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                  className="flex flex-col gap-2 rounded-xl border border-glass-border bg-glass-bg px-4 py-3"
                 >
                   <div className="flex items-center gap-2">
                     <span
@@ -139,7 +139,7 @@ export function InsightsView() {
             className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
               isStale
                 ? "border-amber-500/50 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
-                : "border-white/10 bg-white/5 text-white/40 hover:border-white/20 hover:text-white/60"
+                : "border-glass-border bg-glass-bg text-white/40 hover:border-white/20 hover:text-white/60"
             }`}
           >
             {refresh.isPending
@@ -157,7 +157,7 @@ export function InsightsView() {
         )}
 
         {!profileLoading && !hasProfile && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 text-center">
+          <div className="rounded-xl border border-glass-border bg-glass-bg p-5 text-center">
             <p className="text-sm text-white/40">
               No profile yet. Add some check-ins, then click <span className="text-white/60">Build profile</span> to let the AI analyse your habits.
             </p>
@@ -186,7 +186,7 @@ export function InsightsView() {
                   {profileData.profile.habitTags.map((ht) => (
                     <div
                       key={ht.name}
-                      className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5"
+                      className="flex flex-wrap items-center gap-2 rounded-xl border border-glass-border bg-glass-bg px-4 py-2.5"
                     >
                       <span className="text-sm text-white/80">{ht.name}</span>
                       {ht.tags.map((tag) => (
@@ -246,7 +246,7 @@ export function InsightsView() {
             Nudges you act on
           </h2>
 
-          <div className="flex gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm">
+          <div className="flex gap-4 rounded-xl border border-glass-border bg-glass-bg px-4 py-3 text-sm">
             <div>
               <span className="font-semibold text-white/80">{nudgeStats.picked}</span>
               <span className="ml-1 text-white/30">picked</span>
@@ -266,7 +266,7 @@ export function InsightsView() {
               {nudgeStats.topPicked.map((n) => (
                 <div
                   key={n.action}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                  className="flex items-start justify-between gap-3 rounded-xl border border-glass-border bg-glass-bg px-4 py-3"
                 >
                   <p className="text-sm leading-relaxed text-white/70">{n.action}</p>
                   <span className="shrink-0 text-xs text-white/30">{n.count}×</span>

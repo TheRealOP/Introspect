@@ -171,7 +171,7 @@ export function AiSettings() {
                   ? "cursor-not-allowed border-white/5 bg-white/2 opacity-40"
                   : isActive
                     ? "border-indigo-500/50 bg-indigo-500/10"
-                    : "border-white/10 bg-white/5 hover:border-white/20"
+                    : "border-glass-border bg-glass-bg hover:border-white/20"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -197,7 +197,7 @@ export function AiSettings() {
 
       {/* ── Provider / model config ── */}
       {tier !== "hosted" && (
-        <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/5 p-5">
+        <div className="flex flex-col gap-4 rounded-xl border border-glass-border bg-glass-bg p-5">
           {/* Provider buttons */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">
@@ -211,7 +211,7 @@ export function AiSettings() {
                   className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                     provider === p
                       ? "border-indigo-500/60 bg-indigo-500/20 text-indigo-200"
-                      : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70"
+                      : "border-glass-border bg-glass-bg text-white/50 hover:border-white/20 hover:text-white/70"
                   }`}
                 >
                   {PROVIDER_LABELS[p] ?? p}
@@ -222,7 +222,7 @@ export function AiSettings() {
 
           {/* Model ID */}
           <input
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
+            className="w-full rounded-lg border border-glass-border bg-glass-bg px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
             placeholder="Model ID (e.g. llama3.1:8b)"
             value={model}
             onChange={(e) => { setModel(e.target.value); setTestResult(null); }}
@@ -242,7 +242,7 @@ export function AiSettings() {
           {/* API key */}
           {needsApiKey && (
             <input
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
+              className="w-full rounded-lg border border-glass-border bg-glass-bg px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
               placeholder="API key (leave blank to use env)"
               type="password"
               value={apiKey}
@@ -253,7 +253,7 @@ export function AiSettings() {
           {/* Base URL */}
           {needsBaseUrl && (
             <input
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
+              className="w-full rounded-lg border border-glass-border bg-glass-bg px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
               placeholder={
                 provider === "ollama"
                   ? "Base URL (default: http://localhost:11434/v1)"
@@ -277,7 +277,7 @@ export function AiSettings() {
                   className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                     mode === m
                       ? "border-indigo-500/60 bg-indigo-500/20 text-indigo-200"
-                      : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70"
+                      : "border-glass-border bg-glass-bg text-white/50 hover:border-white/20 hover:text-white/70"
                   }`}
                 >
                   {m === "auto" ? "Auto (recommended)" : m === "tool" ? "Tool calls" : "JSON mode"}
@@ -305,7 +305,7 @@ export function AiSettings() {
             <button
               onClick={handleSave}
               disabled={updateSettings.isPending || !model}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
             >
               {updateSettings.isPending ? "Saving…" : "Save"}
             </button>
