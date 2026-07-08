@@ -42,50 +42,50 @@ function SignInForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
+      <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-text">
         Introspect
       </h1>
-      <p className="mb-8 text-white/50">Sign in to your account</p>
+      <p className="mb-8 text-text/50">Sign in to your account</p>
 
       {verified && (
-        <div className="mb-6 rounded-lg bg-green-500/20 px-4 py-3 text-sm text-green-300">
+        <div className="mb-6 rounded-lg border border-emerald-500/30 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           ✓ Email verified — you can now sign in.
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-white/70">Email</label>
+          <label className="text-sm text-text/60">Email</label>
           <input
             type="email"
             required
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-white/30 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
+            className="rounded-lg border border-text/15 bg-white px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
             placeholder="you@example.com"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-white/70">Password</label>
+          <label className="text-sm text-text/60">Password</label>
           <input
             type="password"
             required
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-white/30 outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
+            className="rounded-lg border border-text/15 bg-white px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
             placeholder="••••••••"
           />
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-300">
+          <div className="rounded-lg border border-rose-500/30 bg-rose-50 px-4 py-2 text-sm text-rose-700">
             <p>{error}</p>
-            <p className="mt-1 text-red-300/70">
+            <p className="mt-1 text-rose-600/70">
               Need to verify?{" "}
-              <Link href="/auth/verify?error=resend" className="underline hover:text-red-200">
+              <Link href="/auth/verify?error=resend" className="underline hover:text-rose-700">
                 Resend verification email
               </Link>
             </p>
@@ -95,15 +95,15 @@ function SignInForm() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 rounded-lg bg-violet-600 px-4 py-2.5 font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50"
+          className="mt-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-white/40">
+      <p className="mt-6 text-center text-sm text-text/40">
         Don&apos;t have an account?{" "}
-        <Link href="/auth/signup" className="text-violet-400 hover:underline">
+        <Link href="/auth/signup" className="text-primary hover:underline">
           Sign up
         </Link>
       </p>
@@ -113,7 +113,7 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 text-white">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <Suspense fallback={null}>
         <SignInForm />
       </Suspense>

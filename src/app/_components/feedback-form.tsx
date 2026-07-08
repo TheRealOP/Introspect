@@ -32,7 +32,7 @@ export function FeedbackForm() {
           message: message.trim(),
           email: email.trim() || undefined,
           category,
-          _hp: "", // honeypot — always empty for real users
+          _hp: "",
         }),
       });
 
@@ -45,10 +45,10 @@ export function FeedbackForm() {
 
   if (status === "done") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-8 py-12 text-center">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-text/10 bg-white px-8 py-12 text-center">
         <span className="text-4xl">🙏</span>
-        <p className="text-lg font-semibold text-white">Thanks for the feedback!</p>
-        <p className="text-sm text-white/40">
+        <p className="text-lg font-semibold text-text">Thanks for the feedback!</p>
+        <p className="text-sm text-text/40">
           It goes straight to the person building this. Every message genuinely helps.
         </p>
         <button
@@ -58,7 +58,7 @@ export function FeedbackForm() {
             setCategory("idea");
             setStatus("idle");
           }}
-          className="mt-2 rounded-lg px-4 py-2 text-sm text-white/40 transition hover:text-white/70"
+          className="mt-2 rounded-lg px-4 py-2 text-sm text-text/40 transition hover:text-text/70"
         >
           Send another
         </button>
@@ -70,7 +70,7 @@ export function FeedbackForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       {/* Category */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-semibold uppercase tracking-widest text-white/40">
+        <label className="text-xs font-semibold uppercase tracking-widest text-text/40">
           Type
         </label>
         <div className="flex flex-wrap gap-2">
@@ -81,8 +81,8 @@ export function FeedbackForm() {
               onClick={() => setCategory(value)}
               className={`rounded-lg px-3 py-1.5 text-sm transition ${
                 category === value
-                  ? "bg-violet-600 text-white"
-                  : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80"
+                  ? "bg-primary text-white"
+                  : "bg-text/5 text-text/50 hover:bg-text/10 hover:text-text/80"
               }`}
             >
               {label}
@@ -95,9 +95,9 @@ export function FeedbackForm() {
       <div className="flex flex-col gap-2">
         <label
           htmlFor="fb-message"
-          className="text-xs font-semibold uppercase tracking-widest text-white/40"
+          className="text-xs font-semibold uppercase tracking-widest text-text/40"
         >
-          Message <span className="text-violet-400">*</span>
+          Message <span className="text-primary">*</span>
         </label>
         <textarea
           id="fb-message"
@@ -106,7 +106,7 @@ export function FeedbackForm() {
           required
           rows={5}
           placeholder="Tell me what's on your mind — bugs, missing features, things you love, anything."
-          className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30"
+          className="w-full resize-none rounded-xl border border-text/15 bg-white px-4 py-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
         />
       </div>
 
@@ -114,9 +114,9 @@ export function FeedbackForm() {
       <div className="flex flex-col gap-2">
         <label
           htmlFor="fb-email"
-          className="text-xs font-semibold uppercase tracking-widest text-white/40"
+          className="text-xs font-semibold uppercase tracking-widest text-text/40"
         >
-          Your email <span className="text-white/20">(optional — only if you want a reply)</span>
+          Your email <span className="text-text/30">(optional — only if you want a reply)</span>
         </label>
         <input
           id="fb-email"
@@ -124,7 +124,7 @@ export function FeedbackForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/30"
+          className="w-full rounded-xl border border-text/15 bg-white px-4 py-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
         />
       </div>
 
@@ -139,7 +139,7 @@ export function FeedbackForm() {
       />
 
       {status === "error" && (
-        <p className="text-sm text-red-400">
+        <p className="text-sm text-rose-600">
           Something went wrong — please try again.
         </p>
       )}
@@ -147,7 +147,7 @@ export function FeedbackForm() {
       <button
         type="submit"
         disabled={!message.trim() || status === "sending"}
-        className="self-start rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+        className="self-start rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {status === "sending" ? "Sending…" : "Send feedback"}
       </button>

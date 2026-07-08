@@ -23,7 +23,6 @@ const DEFAULT_MODELS: Record<string, string> = {
   hosted: "",
 };
 
-// Models known to struggle with structured tool calling
 const WEAK_TOOL_RE = /^gemma|^phi-2/i;
 function isWeakModel(model: string) {
   return WEAK_TOOL_RE.test(model.trim());
@@ -75,7 +74,6 @@ export function AiSettings() {
   const [mode, setMode] = useState<Mode>("auto");
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
 
-  // Populate from saved settings
   useEffect(() => {
     if (!current) return;
     if (current.tier) setTier(current.tier as Tier);
@@ -111,7 +109,7 @@ export function AiSettings() {
   });
 
   const handleTierSelect = (t: Tier) => {
-    if (t === "hosted") return; // disabled
+    if (t === "hosted") return;
     setTier(t);
     setTestResult(null);
     const defaultProvider = t === "selfhost" ? "ollama" : "openai";
@@ -145,9 +143,9 @@ export function AiSettings() {
     <div className="flex flex-col gap-6">
       {/* ── Active config summary ── */}
       {current && (
-        <p className="text-xs text-white/30">
+        <p className="text-xs text-text/40">
           Active:{" "}
-          <span className="text-white/60">
+          <span className="text-text/60">
             {current.provider} / {current.model}
           </span>
           {current.hasApiKey && " · custom key set"}
@@ -168,28 +166,28 @@ export function AiSettings() {
               disabled={isDisabled}
               className={`flex flex-col gap-1.5 rounded-xl border p-4 text-left transition ${
                 isDisabled
-                  ? "cursor-not-allowed border-white/5 bg-white/2 opacity-40"
+                  ? "cursor-not-allowed border-text/5 opacity-40"
                   : isActive
-                    ? "border-indigo-500/50 bg-indigo-500/10"
-                    : "border-white/10 bg-white/5 hover:border-white/20"
+                    ? "border-primary/40 bg-primary/5"
+                    : "border-text/10 bg-white hover:border-text/20"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-base">{meta.icon}</span>
                 {isDisabled && (
-                  <span className="rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30">
+                  <span className="rounded-md border border-text/15 px-1.5 py-0.5 text-[10px] text-text/40">
                     soon
                   </span>
                 )}
                 {isActive && !isDisabled && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 )}
               </div>
-              <p className={`text-sm font-semibold ${isActive ? "text-indigo-200" : "text-white/70"}`}>
+              <p className={`text-sm font-semibold ${isActive ? "text-primary" : "text-text/70"}`}>
                 {meta.label}
               </p>
-              <p className="text-xs text-white/40">{meta.tagline}</p>
-              <p className="mt-1 text-[10px] leading-tight text-white/25">{meta.privacy}</p>
+              <p className="text-xs text-text/40">{meta.tagline}</p>
+              <p className="mt-1 text-[10px] leading-tight text-text/30">{meta.privacy}</p>
             </button>
           );
         })}
@@ -197,10 +195,10 @@ export function AiSettings() {
 
       {/* ── Provider / model config ── */}
       {tier !== "hosted" && (
-        <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/5 p-5">
+        <div className="flex flex-col gap-4 rounded-xl border border-text/10 bg-white p-5">
           {/* Provider buttons */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-text/40">
               Provider
             </p>
             <div className="flex flex-wrap gap-2">
@@ -210,8 +208,8 @@ export function AiSettings() {
                   onClick={() => handleProviderChange(p)}
                   className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                     provider === p
-                      ? "border-indigo-500/60 bg-indigo-500/20 text-indigo-200"
-                      : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70"
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : "border-text/15 bg-text/5 text-text/50 hover:border-text/25 hover:text-text/70"
                   }`}
                 >
                   {PROVIDER_LABELS[p] ?? p}
@@ -222,7 +220,7 @@ export function AiSettings() {
 
           {/* Model ID */}
           <input
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
+            className="w-full rounded-lg border border-text/15 bg-background px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
             placeholder="Model ID (e.g. llama3.1:8b)"
             value={model}
             onChange={(e) => { setModel(e.target.value); setTestResult(null); }}
@@ -230,7 +228,7 @@ export function AiSettings() {
 
           {/* Compatibility hint */}
           {weakWarning && (
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            <div className="rounded-lg border border-amber-500/30 bg-amber-50 px-3 py-2 text-xs text-amber-700">
               <span className="font-semibold">Heads up:</span> {model} may not support structured
               tool calls. Set mode to <strong>Auto</strong> or{" "}
               <strong>JSON</strong>, or use a tool-capable model like{" "}
@@ -242,7 +240,7 @@ export function AiSettings() {
           {/* API key */}
           {needsApiKey && (
             <input
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
+              className="w-full rounded-lg border border-text/15 bg-background px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
               placeholder="API key (leave blank to use env)"
               type="password"
               value={apiKey}
@@ -253,7 +251,7 @@ export function AiSettings() {
           {/* Base URL */}
           {needsBaseUrl && (
             <input
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-white/25"
+              className="w-full rounded-lg border border-text/15 bg-background px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
               placeholder={
                 provider === "ollama"
                   ? "Base URL (default: http://localhost:11434/v1)"
@@ -266,7 +264,7 @@ export function AiSettings() {
 
           {/* Mode selector */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-text/40">
               Output mode
             </p>
             <div className="flex gap-2">
@@ -276,15 +274,15 @@ export function AiSettings() {
                   onClick={() => setMode(m)}
                   className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                     mode === m
-                      ? "border-indigo-500/60 bg-indigo-500/20 text-indigo-200"
-                      : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70"
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : "border-text/15 bg-text/5 text-text/50 hover:border-text/25 hover:text-text/70"
                   }`}
                 >
                   {m === "auto" ? "Auto (recommended)" : m === "tool" ? "Tool calls" : "JSON mode"}
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 text-xs text-white/25">
+            <p className="mt-1.5 text-xs text-text/30">
               {mode === "auto"
                 ? "Tries tool calls first; falls back to JSON for models that don't support them."
                 : mode === "tool"
@@ -298,14 +296,14 @@ export function AiSettings() {
             <button
               onClick={handleTest}
               disabled={testConnection.isPending || !model}
-              className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/60 transition hover:border-white/25 hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-text/15 px-4 py-2 text-sm text-text/60 transition hover:border-text/25 hover:text-text/80 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {testConnection.isPending ? "Testing…" : "Test connection"}
             </button>
             <button
               onClick={handleSave}
               disabled={updateSettings.isPending || !model}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {updateSettings.isPending ? "Saving…" : "Save"}
             </button>
@@ -313,7 +311,7 @@ export function AiSettings() {
               <button
                 onClick={() => clearSettings.mutate()}
                 disabled={clearSettings.isPending}
-                className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/40 transition hover:border-white/20 hover:text-white/60 disabled:opacity-40"
+                className="rounded-lg border border-text/15 px-4 py-2 text-sm text-text/40 transition hover:border-text/25 hover:text-text/60 disabled:opacity-40"
               >
                 Reset to default
               </button>
@@ -325,8 +323,8 @@ export function AiSettings() {
             <div
               className={`rounded-lg border px-3 py-2 text-xs ${
                 testResult.ok
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                  : "border-rose-500/30 bg-rose-500/10 text-rose-300"
+                  ? "border-emerald-500/30 bg-emerald-50 text-emerald-700"
+                  : "border-rose-500/30 bg-rose-50 text-rose-700"
               }`}
             >
               {testResult.ok ? (
@@ -342,7 +340,7 @@ export function AiSettings() {
 
           {/* Save success */}
           {updateSettings.isSuccess && (
-            <p className="text-xs text-emerald-400">Settings saved.</p>
+            <p className="text-xs text-emerald-600">Settings saved.</p>
           )}
         </div>
       )}

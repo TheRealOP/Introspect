@@ -3,4 +3,16 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Brand palette */
+  --color-text: #110104;
+  --color-background: #fffafb;
+  --color-primary: #ef244e;
+  --color-secondary: #f5b37b;
+  --color-accent: #f2c54f;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
