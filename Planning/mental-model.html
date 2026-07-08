@@ -234,6 +234,7 @@
       <span class="phase-chip done">✓ Phase 3 · Habit extraction + 4-nudge picker</span>
       <span class="phase-chip done">✓ Phase 4 · Insights page + AI-agnostic layer</span>
       <span class="phase-chip done">✓ Phase 5 · Auth + per-user Turso DBs + Vercel deploy</span>
+      <span class="phase-chip done">✓ 2026-07-07 · Audit fixes (C1–M5) + repo cleanup + flat UI palette</span>
     </div>
   </div>
 
@@ -317,13 +318,13 @@
     <!-- Sub-routers -->
     <div class="row">
       <div class="card accent-purple">
-        <div class="card-title">post router <span class="tag tag-stub">stub</span></div>
+        <div class="card-title">other routers <span class="tag tag-done">done</span></div>
         <div class="card-sub">
-          <code>src/server/api/routers/post.ts</code><br/>
-          <b>hello</b>(text) → greeting string<br/>
+          <code>src/server/api/routers/</code><br/>
+          <b>wiki</b> · <b>push</b> · <b>reminders</b> · <b>feedback</b><br/>
           <br/>
-          Placeholder until real routers land.<br/>
-          Add new routers here as phases progress.
+          Scaffold <code>post</code> router removed in the<br/>
+          2026-07-07 repo cleanup.
         </div>
       </div>
       <div class="card accent-purple">
@@ -866,7 +867,7 @@
           <code>src/app/layout.tsx</code> &nbsp;—&nbsp; root layout (fonts, globals)<br/>
           <code>src/app/api/trpc/[trpc]/route.ts</code> &nbsp;—&nbsp; tRPC HTTP endpoint<br/>
           <code>src/server/api/trpc.ts</code> &nbsp;—&nbsp; context + middleware + procedure factories<br/>
-          <code>src/server/api/root.ts</code> &nbsp;—&nbsp; appRouter: post · journal · habits · insights · settings<br/>
+          <code>src/server/api/root.ts</code> &nbsp;—&nbsp; appRouter: journal · habits · insights · settings · wiki · push · reminders · feedback<br/>
           <code>src/server/ai/provider.ts</code> &nbsp;—&nbsp; AI provider factory (DB → env → Groq default) <span class="tag tag-done">Phase 4</span><br/>
           <code>src/server/ai/extract.ts</code> &nbsp;—&nbsp; habit extraction via tool-calling + Zod <span class="tag tag-done">Phase 3+4</span><br/>
           <code>src/server/ai/insights.ts</code> &nbsp;—&nbsp; buildInsights() — 5-tag knowledge graph + suggestions <span class="tag tag-done">Phase 4</span><br/>
@@ -874,9 +875,12 @@
           <code>src/server/api/routers/habits.ts</code> &nbsp;—&nbsp; list · updateSentiment · delete <span class="tag tag-done">done</span><br/>
           <code>src/server/api/routers/insights.ts</code> &nbsp;—&nbsp; streaks · nudgeStats · get · refresh <span class="tag tag-done">Phase 4</span><br/>
           <code>src/server/api/routers/settings.ts</code> &nbsp;—&nbsp; get · update · clear <span class="tag tag-done">Phase 4</span><br/>
-          <code>src/server/api/routers/post.ts</code> &nbsp;—&nbsp; placeholder router <span class="tag tag-stub">stub</span><br/>
+          <code>src/server/user-db.ts</code> &nbsp;—&nbsp; reads per-user Turso creds from the JWT (never sent to browser) <span class="tag tag-done">2026-07-07</span><br/>
+          <code>src/server/db/ensure-tables.ts</code> &nbsp;—&nbsp; single source of lazy user-DB migrations (tables + columns) <span class="tag tag-done">2026-07-07</span><br/>
+          <code>src/middleware.ts</code> &nbsp;—&nbsp; auth gate; public: auth/signup/verify/cron/feedback/PWA assets <span class="tag tag-done">2026-07-07</span><br/>
+          <code>vercel.json</code> &nbsp;—&nbsp; Vercel Cron → /api/cron/reminders hourly <span class="tag tag-done">2026-07-07</span><br/>
           <code>src/server/db/index.ts</code> &nbsp;—&nbsp; Drizzle client + libsql connection<br/>
-          <code>src/server/db/schema.ts</code> &nbsp;—&nbsp; 6 tables: entries · habits · nudges · habit_occurrences · settings · profile <span class="tag tag-done">done</span><br/>
+          <code>src/server/db/schema.ts</code> &nbsp;—&nbsp; 11 tables: entries · habits · nudges · habit_occurrences · settings · profile · chat_messages · wiki_pages · wiki_edges · push_subscriptions · reminders <span class="tag tag-done">done</span><br/>
           <code>src/trpc/react.tsx</code> &nbsp;—&nbsp; client-side tRPC + React Query provider<br/>
           <code>src/trpc/server.ts</code> &nbsp;—&nbsp; server-side tRPC caller<br/>
           <code>src/env.js</code> &nbsp;—&nbsp; t3-env: all AI provider keys optional, AI_PROVIDER/MODEL/BASE_URL added <span class="tag tag-done">Phase 4</span><br/>
