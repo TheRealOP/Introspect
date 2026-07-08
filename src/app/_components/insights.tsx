@@ -211,7 +211,7 @@ export function InsightsView() {
                 <ul className="flex flex-col gap-2">
                   {profileData.profile.suggestions.map((s, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-text/70">
-                      <span className="mt-0.5 text-secondary">→</span>
+                      <span className="mt-0.5 text-primary">→</span>
                       {s}
                     </li>
                   ))}

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Check in. Track what you do. Spot your habits.",
     start_url: "/",
     display: "standalone",
-    background_color: "#15162c",
-    theme_color: "#2e026d",
+    background_color: "#fffafb",
+    theme_color: "#ef244e",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
