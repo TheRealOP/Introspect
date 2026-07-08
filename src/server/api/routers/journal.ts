@@ -139,9 +139,15 @@ export const journalRouter = createTRPCRouter({
     }),
 
   // ---------------------------------------------------------------------------
-  // Backfill: analyze every entry that doesn't yet have nudges
+  // Backfill: analyze entries that don't yet have nudges.
+  //
+  // Capped at BATCH_SIZE entries per call so a large backlog can't blow the
+  // serverless function timeout (audit M5). Returns how many are still pending
+  // so the client can loop until `remaining` hits 0.
   // ---------------------------------------------------------------------------
   analyzeAll: publicProcedure.mutation(async ({ ctx }) => {
+    const BATCH_SIZE = 10;
+
     const allEntries = await ctx.db
       .select()
       .from(entries)
@@ -151,6 +157,9 @@ export const journalRouter = createTRPCRouter({
       .select({ entryId: nudges.entryId })
       .from(nudges);
     const analyzedIds = new Set(existingNudges.map((n) => n.entryId));
+
+    const pending = allEntries.filter((e) => !analyzedIds.has(e.id));
+    const batch = pending.slice(0, BATCH_SIZE);
 
     const pastSelections = await ctx.db
       .select({ action: nudges.action })
@@ -163,9 +172,7 @@ export const journalRouter = createTRPCRouter({
 
     let analyzed = 0;
 
-    for (const entry of allEntries) {
-      if (analyzedIds.has(entry.id)) continue;
-
+    for (const entry of batch) {
       const previous = allEntries
         .filter(
           (e) =>
@@ -198,7 +205,7 @@ export const journalRouter = createTRPCRouter({
       analyzed++;
     }
 
-    return { analyzed };
+    return { analyzed, remaining: pending.length - analyzed };
   }),
 
   // ---------------------------------------------------------------------------

@@ -55,7 +55,15 @@ export async function getAiConfig(db: UserDb): Promise<AiConfig> {
     };
   }
 
-  // Env fallback
+  // Env fallback. In production, silently defaulting to a local Ollama server
+  // that doesn't exist produces a confusing connection error — fail loudly and
+  // point the user at Settings instead. Ollama stays the default in dev.
+  if (!env.AI_PROVIDER && env.NODE_ENV === "production") {
+    throw new Error(
+      "No AI provider configured — set one in Settings.",
+    );
+  }
+
   const provider = env.AI_PROVIDER ?? DEFAULT_PROVIDER;
   const model = env.AI_MODEL ?? DEFAULT_MODEL;
 

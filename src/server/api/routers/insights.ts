@@ -7,6 +7,17 @@ import { resolveAi } from "~/server/ai/provider";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { entries, habitOccurrences, habits, nudges, profile } from "~/server/db/schema";
 
+// Tolerate malformed JSON in the profile's serialized columns so one bad row
+// can't 500 the whole query.
+function safeParse<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Streak computation helper — pure JS over unix-second timestamps
 // ---------------------------------------------------------------------------
@@ -125,8 +136,8 @@ export const insightsRouter = createTRPCRouter({
 
     const parsed = {
       summary: row.summary,
-      habitTags: row.habitTags ? (JSON.parse(row.habitTags) as { name: string; tags: string[] }[]) : [],
-      suggestions: row.suggestions ? (JSON.parse(row.suggestions) as string[]) : [],
+      habitTags: safeParse<{ name: string; tags: string[] }[]>(row.habitTags, []),
+      suggestions: safeParse<string[]>(row.suggestions, []),
       nudgePreference: row.nudgePreference,
       updatedAt: row.updatedAt,
     };

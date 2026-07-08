@@ -1,9 +1,11 @@
 import { desc, eq } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { streamText } from "ai";
+import { waitUntil } from "@vercel/functions";
 
-import { auth } from "~/server/auth";
 import { createUserDb } from "~/server/db";
+import { ensureUserTables } from "~/server/db/ensure-tables";
+import { getUserDbCredentials } from "~/server/user-db";
 import {
   chatMessages,
   entries,
@@ -21,12 +23,24 @@ import {
 
 export const runtime = "nodejs";
 
+// Tolerate malformed JSON in the tags column so one bad row can't 500 the route.
+function parseTags(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+}
+
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user?.dbUrl) {
+  const creds = await getUserDbCredentials(req.headers);
+  if (!creds) {
     return new Response("Unauthorized", { status: 401 });
   }
-  const db = createUserDb(session.user.dbUrl, session.user.dbAuthToken);
+  const db = createUserDb(creds.dbUrl, creds.dbAuthToken);
+  // Heal legacy DBs missing the chat/wiki tables before we query them.
+  await ensureUserTables(db);
 
   const body = (await req.json()) as { messages: { role: string; content: string }[] };
   const messages = body.messages ?? [];
@@ -63,7 +77,7 @@ export async function POST(req: Request) {
     title: p.title,
     category: p.category,
     content: p.content,
-    tags: p.tags ? (JSON.parse(p.tags) as string[]) : [],
+    tags: parseTags(p.tags),
   }));
 
   const context = buildChatContext(
@@ -103,8 +117,11 @@ ${context}`,
         { id: uuid(), role: "assistant", content: text, createdAt: now + 1 },
       ]);
 
-      // Update wiki in background — don't block the stream
-      extractWikiUpdates(model, lastUserMessage.content, text, parsedPages, mode)
+      // Update wiki in the background without blocking the stream. waitUntil
+      // keeps the serverless function alive until the write finishes — a bare
+      // floating promise would be killed when the function freezes (audit M2).
+      waitUntil(
+        extractWikiUpdates(model, lastUserMessage.content, text, parsedPages, mode)
         .then(async (ops) => {
           for (const page of ops.upsertPages) {
             const existing = await db
@@ -139,7 +156,8 @@ ${context}`,
               .onConflictDoNothing();
           }
         })
-        .catch(console.error);
+        .catch(console.error),
+      );
     },
   });
 

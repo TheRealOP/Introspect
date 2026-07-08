@@ -12,11 +12,12 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function GET(request: Request) {
-  // Guard: require ?secret= matching CRON_SECRET
-  const url = new URL(request.url);
-  const secret =
-    url.searchParams.get("secret") ??
-    request.headers.get("authorization")?.replace("Bearer ", "");
+  // Guard: require `Authorization: Bearer <CRON_SECRET>`. Vercel Cron sends this
+  // header automatically. We deliberately do NOT accept a ?secret= query param —
+  // URLs leak into access logs and proxies (audit M4).
+  const secret = request.headers
+    .get("authorization")
+    ?.replace("Bearer ", "");
 
   if (!secret || secret !== env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
