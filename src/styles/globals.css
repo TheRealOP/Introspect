@@ -5,11 +5,11 @@
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
   /* Brand palette */
-  --color-text: #110104;
-  --color-background: #fffafb;
-  --color-primary: #ef244e;
-  --color-secondary: #f5b37b;
-  --color-accent: #f2c54f;
+  --color-text: #f3f4f6;
+  --color-background: #000000;
+  --color-primary: #7c3aed;
+  --color-secondary: #8b5cf6;
+  --color-accent: #a78bfa;
 }
 
 body {
