@@ -4,16 +4,16 @@ import Link from "next/link";
 import { api } from "~/trpc/react";
 
 const sentimentDot: Record<string, string> = {
-  positive: "bg-emerald-500",
-  negative: "bg-rose-500",
+  positive: "bg-primary",
+  negative: "bg-accent",
   neutral: "bg-text/20",
 };
 
 const tagStyle: Record<string, string> = {
-  aware: "border-sky-500/40 bg-sky-500/10 text-sky-700",
-  unaware: "border-amber-500/40 bg-amber-500/15 text-amber-700",
-  wantToBuild: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700",
-  wantToRemove: "border-rose-500/40 bg-rose-500/10 text-rose-700",
+  aware: "border-border-strong bg-chip text-accent-text",
+  unaware: "border-negative-border bg-negative-soft text-accent",
+  wantToBuild: "border-border-strong bg-accent-soft text-accent-text",
+  wantToRemove: "border-border bg-secondary-soft text-secondary-text",
 };
 
 const tagLabel: Record<string, string> = {
@@ -51,7 +51,7 @@ export function InsightsView() {
     <div className="flex w-full max-w-2xl flex-col gap-8">
 
       {/* ── AI provider banner ── */}
-      <div className="flex items-center justify-between rounded-xl border border-text/10 bg-white px-4 py-3">
+      <div className="flex items-center justify-between rounded-xl border-[1.5px] border-border bg-surface px-4 py-3">
         <p className="text-xs text-text/40">
           {currentSettings
             ? <>AI: <span className="text-text/60">{currentSettings.provider} / {currentSettings.model}</span></>
@@ -88,7 +88,7 @@ export function InsightsView() {
               return (
                 <div
                   key={h.id}
-                  className="flex flex-col gap-2 rounded-xl border border-text/10 bg-white px-4 py-3"
+                  className="flex flex-col gap-2 rounded-xl border-[1.5px] border-border bg-surface px-4 py-3"
                 >
                   <div className="flex items-center gap-2">
                     <span
@@ -102,7 +102,7 @@ export function InsightsView() {
                       {tags.map((tag) => (
                         <span
                           key={tag}
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tagStyle[tag] ?? "border-text/10 text-text/40"}`}
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tagStyle[tag] ?? "border-border text-text/40"}`}
                         >
                           {tagLabel[tag] ?? tag}
                         </span>
@@ -137,8 +137,8 @@ export function InsightsView() {
             disabled={refresh.isPending}
             className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
               isStale
-                ? "border-amber-500/50 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20"
-                : "border-text/15 bg-text/5 text-text/40 hover:border-text/25 hover:text-text/60"
+                ? "border-border-strong bg-chip text-accent-text hover:bg-accent-soft"
+                : "border-border bg-text/5 text-text/40 hover:border-border-strong hover:text-text/60"
             }`}
           >
             {refresh.isPending
@@ -156,7 +156,7 @@ export function InsightsView() {
         )}
 
         {!profileLoading && !hasProfile && (
-          <div className="rounded-xl border border-text/10 bg-white p-5 text-center">
+          <div className="rounded-xl border-[1.5px] border-border bg-surface p-5 text-center">
             <p className="text-sm text-text/40">
               No profile yet. Add some check-ins, then click <span className="text-text/60">Build profile</span> to let the AI analyse your habits.
             </p>
@@ -166,8 +166,8 @@ export function InsightsView() {
         {hasProfile && profileData?.profile && (
           <div className="flex flex-col gap-4">
             {/* Summary */}
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary/60">
+            <div className="rounded-xl border-[1.5px] border-border bg-accent-soft p-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-accent-text">
                 Summary
               </p>
               <p className="text-sm leading-relaxed text-text/80">
@@ -185,13 +185,13 @@ export function InsightsView() {
                   {profileData.profile.habitTags.map((ht) => (
                     <div
                       key={ht.name}
-                      className="flex flex-wrap items-center gap-2 rounded-xl border border-text/10 bg-white px-4 py-2.5"
+                      className="flex flex-wrap items-center gap-2 rounded-xl border-[1.5px] border-border bg-surface px-4 py-2.5"
                     >
                       <span className="text-sm text-text/80">{ht.name}</span>
                       {ht.tags.map((tag) => (
                         <span
                           key={tag}
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tagStyle[tag] ?? "border-text/10 text-text/40"}`}
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tagStyle[tag] ?? "border-border text-text/40"}`}
                         >
                           {tagLabel[tag] ?? tag}
                         </span>
@@ -204,7 +204,7 @@ export function InsightsView() {
 
             {/* Suggestions */}
             {profileData.profile.suggestions.length > 0 && (
-              <div className="rounded-xl border border-secondary/40 bg-secondary/10 p-4">
+              <div className="rounded-xl border-[1.5px] border-border bg-secondary-soft p-4">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-text/50">
                   Suggestions
                 </p>
@@ -221,7 +221,7 @@ export function InsightsView() {
 
             {/* Nudge preference */}
             {profileData.profile.nudgePreference && (
-              <div className="rounded-xl border border-accent/40 bg-accent/15 p-4">
+              <div className="rounded-xl border-[1.5px] border-negative-border bg-negative-soft p-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-text/50">
                   Nudge preference
                 </p>
@@ -245,7 +245,7 @@ export function InsightsView() {
             Nudges you act on
           </h2>
 
-          <div className="flex gap-4 rounded-xl border border-text/10 bg-white px-4 py-3 text-sm">
+          <div className="flex gap-4 rounded-xl border-[1.5px] border-border bg-surface px-4 py-3 text-sm">
             <div>
               <span className="font-semibold text-text/80">{nudgeStats.picked}</span>
               <span className="ml-1 text-text/40">picked</span>
@@ -265,7 +265,7 @@ export function InsightsView() {
               {nudgeStats.topPicked.map((n) => (
                 <div
                   key={n.action}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-text/10 bg-white px-4 py-3"
+                  className="flex items-start justify-between gap-3 rounded-xl border-[1.5px] border-border bg-surface px-4 py-3"
                 >
                   <p className="text-sm leading-relaxed text-text/70">{n.action}</p>
                   <span className="shrink-0 text-xs text-text/30">{n.count}×</span>

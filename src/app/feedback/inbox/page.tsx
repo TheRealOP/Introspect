@@ -38,7 +38,7 @@ export default function FeedbackInboxPage() {
         )}
 
         {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-700">
+          <div className="rounded-xl border-[1.5px] border-negative-border bg-negative-soft px-5 py-4 text-sm text-accent">
             {error.message === "FORBIDDEN"
               ? "You're not authorized to view this page."
               : `Error: ${error.message}`}
@@ -54,7 +54,7 @@ export default function FeedbackInboxPage() {
             {data.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col gap-3 rounded-xl border border-text/10 bg-white px-5 py-4"
+                className="flex flex-col gap-3 rounded-xl border-[1.5px] border-border bg-surface px-5 py-4"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">

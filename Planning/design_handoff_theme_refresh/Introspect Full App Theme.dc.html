@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;font-family:'Inter',ui-sans-serif,sans-serif;}
+</style>
+</helmet>
+
+<div style="{{shell.page}}">
+  <div style="{{shell.container}}">
+
+    <div style="{{shell.headerRow}}">
+      <div>
+        <p style="{{shell.title}}">Introspect</p>
+        <p style="{{shell.subtitle}}">Check in. Track what you do. Spot your habits.</p>
+      </div>
+      <button style="{{shell.toggleBtn}}" onClick="{{shell.toggleTheme}}">{{shell.modeLabel}} mode</button>
+    </div>
+
+    <nav style="{{shell.navRow}}">
+      <span style="{{tabs.checkin.style}}" onClick="{{tabs.checkin.onClick}}">Check in</span>
+      <span style="{{tabs.habits.style}}" onClick="{{tabs.habits.onClick}}">Habits</span>
+      <span style="{{tabs.log.style}}" onClick="{{tabs.log.onClick}}">Log</span>
+      <span style="{{tabs.insights.style}}" onClick="{{tabs.insights.onClick}}">Insights</span>
+      <span style="{{tabs.chat.style}}" onClick="{{tabs.chat.onClick}}">Reflect</span>
+      <span style="{{tabs.settings.style}}" onClick="{{tabs.settings.onClick}}">Settings</span>
+    </nav>
+
+    <!-- ============ CHECK-IN ============ -->
+    <sc-if value="{{isCheckin}}" hint-placeholder-val="{{true}}">
+      <div style="{{shell.pageCol}}">
+        <div style="{{s.textarea}}">What have you done since your last check-in?</div>
+        <div style="{{s.hintRow}}">
+          <span style="{{s.hintText}}">⌘ + Enter to save</span>
+          <div style="{{s.actionsRow}}">
+            <button style="{{s.ghostBtn}}">Analyze all entries</button>
+            <button style="{{s.primaryBtn}}">Log check-in</button>
+          </div>
+        </div>
+        <div style="{{s.planSection}}">
+          <p style="{{s.sectionLabel}}">What's your plan until the next check-in?</p>
+          <button style="{{s.planBtn}}">Finish the auth flow, then take a 15-min walk before dinner.</button>
+          <button style="{{s.planBtn}}">Block 45 minutes tomorrow morning for deep work.</button>
+        </div>
+        <div style="{{s.card}}">
+          <p style="{{s.sectionLabel2}}">Habits spotted this check-in</p>
+          <div style="{{s.chipsRow}}">
+            <span style="{{s.chip}}"><span style="{{s.dotPositive}}"></span>Deep work · positive</span>
+            <span style="{{s.chipNegative}}"><span style="{{s.dotNegative}}"></span>Late nights · negative</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ HABITS ============ -->
+    <sc-if value="{{isHabits}}" hint-placeholder-val="{{false}}">
+      <div style="{{shell.pageCol}}">
+        <div style="{{s.card}}">
+          <div style="{{s.rowBetween}}">
+            <div style="{{s.rowStart}}">
+              <span style="{{s.dotPositive}}"></span>
+              <p style="{{s.habitName}}">Morning workout</p>
+            </div>
+            <div style="{{s.rowStart}}">
+              <button style="{{s.tinyGhostBtn}}">Edit</button>
+              <button style="{{s.tinyDangerBtn}}">Delete</button>
+            </div>
+          </div>
+          <div style="{{s.metaRow}}">
+            <span><span style="{{s.metaStrong}}">14</span>× seen</span>
+            <span>positive</span>
+            <span>last Jul 8</span>
+          </div>
+        </div>
+        <div style="{{s.card}}">
+          <div style="{{s.rowBetween}}">
+            <div style="{{s.rowStart}}">
+              <span style="{{s.dotNegative}}"></span>
+              <p style="{{s.habitName}}">Late-night scrolling</p>
+            </div>
+            <div style="{{s.rowStart}}">
+              <button style="{{s.tinyGhostBtn}}">Cancel</button>
+              <button style="{{s.tinyDangerBtn}}">Delete</button>
+            </div>
+          </div>
+          <div style="{{s.metaRow}}">
+            <span><span style="{{s.metaStrong}}">9</span>× seen</span>
+            <span>negative</span>
+            <span>last Jul 9</span>
+          </div>
+          <div style="{{s.editRow}}">
+            <p style="{{s.hintText}}">Change sentiment:</p>
+            <div style="{{s.actionsRow}}">
+              <span style="{{s.sentimentBtnPositive}}">positive</span>
+              <span style="{{s.sentimentBtnNeutral}}">neutral</span>
+              <span style="{{s.sentimentBtnNegativeActive}}">negative</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ LOG ============ -->
+    <sc-if value="{{isLog}}" hint-placeholder-val="{{false}}">
+      <div style="{{shell.pageCol}}">
+        <div style="{{s.card}}">
+          <p style="{{s.entryText}}">Shipped the auth flow finally. Took longer than expected but it feels solid now. Went for a walk after to clear my head.</p>
+          <p style="{{s.entryDate}}">Jul 9, 2026, 9:14 PM</p>
+        </div>
+        <div style="{{s.card}}">
+          <p style="{{s.entryText}}">Rough night, stayed up scrolling way too late again. Need to actually charge my phone outside the bedroom.</p>
+          <p style="{{s.entryDate}}">Jul 8, 2026, 11:52 PM</p>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ INSIGHTS ============ -->
+    <sc-if value="{{isInsights}}" hint-placeholder-val="{{false}}">
+      <div style="{{shell.pageCol}}">
+        <div style="{{s.aiBanner}}">
+          <p style="{{s.hintText}}">AI: <span style="{{s.textMutedStrong}}">groq / llama-3.3</span></p>
+          <span style="{{s.linkText}}">Change →</span>
+        </div>
+
+        <div>
+          <p style="{{s.sectionLabel2}}">Habit Streaks</p>
+          <div style="{{s.grid2}}">
+            <div style="{{s.card}}">
+              <div style="{{s.rowStart}}"><span style="{{s.dotPositive}}"></span><p style="{{s.habitName}}">Morning workout</p></div>
+              <div style="{{s.tagRow}}"><span style="{{s.badgeAware}}">aware</span><span style="{{s.badgeBuild}}">want to build</span></div>
+              <div style="{{s.metaRow}}"><span><span style="{{s.metaStrong}}">6</span>d current</span><span><span style="{{s.metaStrong}}">11</span>d best</span></div>
+            </div>
+            <div style="{{s.card}}">
+              <div style="{{s.rowStart}}"><span style="{{s.dotNegative}}"></span><p style="{{s.habitName}}">Late-night scrolling</p></div>
+              <div style="{{s.tagRow}}"><span style="{{s.badgeUnaware}}">unaware</span><span style="{{s.badgeRemove}}">want to remove</span></div>
+              <div style="{{s.metaRow}}"><span><span style="{{s.metaStrong}}">2</span>d current</span><span><span style="{{s.metaStrong}}">4</span>d best</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="{{s.rowBetween}}">
+            <p style="{{s.sectionLabel2}}">AI Profile</p>
+            <button style="{{s.tinyGhostBtn}}">↻ Refresh</button>
+          </div>
+          <div style="{{s.stackCol}}">
+            <div style="{{s.summaryCard}}">
+              <p style="{{s.sectionLabel}}">Summary</p>
+              <p style="{{s.bodyText}}">You're consistent with morning workouts but check-ins skew later at night, right when scrolling habits show up.</p>
+            </div>
+            <div style="{{s.suggestionsCard}}">
+              <p style="{{s.sectionLabel3}}">Suggestions</p>
+              <p style="{{s.bodyText}}">→ Try moving your check-in earlier, before the late scroll window starts.</p>
+            </div>
+            <div style="{{s.nudgeCard}}">
+              <p style="{{s.sectionLabel4}}">Nudge preference</p>
+              <p style="{{s.bodyText}}">Short, direct action items land better than reflective questions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ REFLECT / CHAT ============ -->
+    <sc-if value="{{isChat}}" hint-placeholder-val="{{false}}">
+      <div style="{{shell.pageCol}}">
+        <div style="{{s.aiBanner}}">
+          <span style="{{s.hintText}}">6 things known about you</span>
+          <span style="{{s.linkText}}">show ↓</span>
+        </div>
+        <div style="{{s.chatBox}}">
+          <div style="{{s.bubbleRowEnd}}"><div style="{{s.bubbleUser}}">What patterns do you see in me?</div></div>
+          <div style="{{s.bubbleRowStart}}"><div style="{{s.bubbleAssistant}}">You tend to log your best days early — mornings with a workout logged almost always turn into a productive night too.</div></div>
+        </div>
+        <div style="{{s.inputRow}}">
+          <div style="{{s.inputField}}">Say anything…</div>
+          <button style="{{s.primaryBtn}}">Send</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ SETTINGS ============ -->
+    <sc-if value="{{isSettings}}" hint-placeholder-val="{{false}}">
+      <div style="{{shell.pageCol}}">
+        <div style="{{s.card}}">
+          <div style="{{s.rowBetween}}">
+            <div>
+              <p style="{{s.habitName}}">Check-in Reminders</p>
+              <p style="{{s.hintText}}">Get notified when it's time to check in</p>
+            </div>
+            <div style="{{s.switchTrackOn}}"><div style="{{s.switchThumbOn}}"></div></div>
+          </div>
+          <div style="{{s.intervalRow}}">
+            <span style="{{s.bodyTextSm}}">Remind me every</span>
+            <span style="{{s.selectField}}">3 hours</span>
+            <span style="{{s.bodyTextSm}}">of inactivity</span>
+          </div>
+        </div>
+        <div style="{{s.card}}">
+          <p style="{{s.habitName}}">AI Provider &amp; Data Residency</p>
+          <p style="{{s.hintText}}">Choose exactly where your words go when AI features run.</p>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { theme: "light", tab: "checkin" };
+
+  toggleTheme() {
+    this.setState((s) => ({ theme: s.theme === "light" ? "dark" : "light" }));
+  }
+
+  setTab(tab) {
+    this.setState({ tab });
+  }
+
+  mix(c1, p1, c2) {
+    return `color-mix(in srgb, ${c1} ${p1}%, ${c2} ${100 - p1}%)`;
+  }
+
+  palette() {
+    const isDark = this.state.theme === "dark";
+    const mix = this.mix;
+    if (!isDark) {
+      const bg = "#f7fcfd";
+      const text = "#040e11";
+      const primary = "#35aed0";
+      const secondary = "#e58bbc";
+      const accent = "#db7866";
+      return {
+        isDark,
+        bg,
+        text,
+        primary,
+        secondary,
+        accent,
+        surface: mix(bg, 95, primary),
+        border: mix(primary, 30, bg),
+        textMuted: mix(text, 68, bg),
+        textFaint: mix(text, 44, bg),
+        accentSoft: mix(bg, 84, primary),
+        accentText: mix(primary, 92, text),
+        secondaryText: mix(secondary, 92, text),
+        secondarySoft: mix(bg, 80, secondary),
+        accentBorderStrong: mix(primary, 55, bg),
+        chipBg: mix(bg, 90, primary),
+        negativeSoft: mix(bg, 88, accent),
+        negativeBorder: mix(accent, 45, bg),
+        onAccent: "#ffffff",
+        shadow: `0 1px 2px rgba(4,14,17,.06), 0 16px 32px -12px ${mix(primary, 22, "transparent")}`,
+      };
+    }
+    const bg = "#15191b";
+    const text = "#eef8fb";
+    const primary = mix("#2fa9ca", 48, bg);
+    const secondary = mix("#741a4c", 80, "#eef8fb");
+    const accent = "#993524";
+    return {
+      isDark,
+      bg,
+      text,
+      primary,
+      secondary,
+      accent,
+      surface: mix(bg, 91, primary),
+      border: mix(primary, 38, bg),
+      textMuted: mix(text, 68, bg),
+      textFaint: mix(text, 44, bg),
+      accentSoft: mix(bg, 95, primary),
+      accentText: mix(primary, 92, text),
+      secondaryText: mix(secondary, 92, text),
+      secondarySoft: mix(bg, 65, secondary),
+      accentBorderStrong: mix(primary, 68, bg),
+      chipBg: mix(bg, 84, primary),
+      negativeSoft: mix(bg, 78, accent),
+      negativeBorder: mix(accent, 45, bg),
+      onAccent: "#ffffff",
+      shadow: `0 1px 2px rgba(0,0,0,.4), 0 18px 36px -14px ${mix(primary, 28, "transparent")}`,
+      planBtnBg: mix(bg, 88, primary),
+    };
+  }
+
+  buildStyles(p) {
+    const font = "'Inter', ui-sans-serif, sans-serif";
+    const planBtnBg = p.planBtnBg ?? p.surface;
+    const card = { background: p.surface, border: `1.5px solid ${p.border}`, borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 10 };
+    const badgeBase = { borderRadius: 999, padding: "3px 9px", fontSize: 10.5, fontWeight: 700, border: "1.5px solid transparent" };
+
+    return {
+      textarea: { minHeight: 96, background: p.surface, border: `1.5px solid ${p.border}`, borderRadius: 14, padding: 14, color: p.textFaint, fontSize: 13.5, fontFamily: font, lineHeight: 1.5 },
+      hintRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" },
+      hintText: { fontSize: 11.5, color: p.textFaint, margin: 0 },
+      actionsRow: { display: "flex", gap: 8, alignItems: "center" },
+      ghostBtn: { fontFamily: font, border: `1.5px solid ${p.border}`, background: "transparent", color: p.textMuted, fontSize: 12.5, fontWeight: 500, padding: "8px 14px", borderRadius: 10, cursor: "pointer" },
+      tinyGhostBtn: { fontFamily: font, border: `1.5px solid ${p.border}`, background: "transparent", color: p.textMuted, fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 8, cursor: "pointer" },
+      tinyDangerBtn: { fontFamily: font, border: `1.5px solid ${p.negativeBorder}`, background: "transparent", color: p.accent, fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 8, cursor: "pointer" },
+      primaryBtn: { fontFamily: font, border: "none", background: p.primary, color: p.onAccent, fontSize: 12.5, fontWeight: 700, padding: "8px 16px", borderRadius: 10, cursor: "pointer", boxShadow: `0 6px 16px -6px ${p.accentBorderStrong}` },
+      planSection: { display: "flex", flexDirection: "column", gap: 8, background: p.accentSoft, border: `1.5px solid ${p.border}`, borderRadius: 16, padding: 14 },
+      sectionLabel: { fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: p.secondaryText, margin: "0 0 2px" },
+      sectionLabel2: { fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: p.textFaint, margin: "0 0 10px" },
+      sectionLabel3: { fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: p.secondaryText, margin: "0 0 8px" },
+      sectionLabel4: { fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: p.accent, margin: "0 0 8px" },
+      planBtn: { fontFamily: font, textAlign: "left", background: planBtnBg, border: `1.5px solid ${p.accentBorderStrong}`, borderRadius: 12, padding: 12, fontSize: 12.5, lineHeight: 1.5, color: p.text, cursor: "pointer" },
+      card,
+      chipsRow: { display: "flex", flexWrap: "wrap", gap: 8 },
+      chip: { display: "inline-flex", alignItems: "center", gap: 6, background: p.chipBg, border: `1.5px solid ${p.accentBorderStrong}`, borderRadius: 999, padding: "5px 10px", fontSize: 11.5, fontWeight: 600, color: p.text },
+      chipNegative: { display: "inline-flex", alignItems: "center", gap: 6, background: p.negativeSoft, border: `1.5px solid ${p.negativeBorder}`, borderRadius: 999, padding: "5px 10px", fontSize: 11.5, fontWeight: 600, color: p.text },
+      dotPositive: { width: 7, height: 7, borderRadius: 999, background: p.primary, display: "inline-block", flexShrink: 0 },
+      dotNegative: { width: 7, height: 7, borderRadius: 999, background: p.accent, display: "inline-block", flexShrink: 0 },
+      rowBetween: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
+      rowStart: { display: "flex", alignItems: "center", gap: 8 },
+      habitName: { fontSize: 14, fontWeight: 600, color: p.text, margin: 0 },
+      metaRow: { display: "flex", gap: 14, fontSize: 11.5, color: p.textFaint },
+      metaStrong: { fontWeight: 700, color: p.textMuted },
+      editRow: { display: "flex", flexDirection: "column", gap: 8, borderTop: `1px solid ${p.border}`, paddingTop: 10 },
+      sentimentBtnPositive: { ...badgeBase, borderColor: p.accentBorderStrong, background: p.chipBg, color: p.primary, padding: "6px 12px" },
+      sentimentBtnNeutral: { ...badgeBase, borderColor: p.border, background: "transparent", color: p.textFaint, padding: "6px 12px" },
+      sentimentBtnNegativeActive: { ...badgeBase, borderColor: p.negativeBorder, background: p.negativeSoft, color: p.accent, padding: "6px 12px" },
+      entryText: { fontSize: 13.5, lineHeight: 1.6, color: p.text, margin: 0, whiteSpace: "pre-wrap" },
+      entryDate: { fontSize: 11, color: p.textFaint, margin: "8px 0 0" },
+      aiBanner: { display: "flex", alignItems: "center", justifyContent: "space-between", background: p.surface, border: `1.5px solid ${p.border}`, borderRadius: 14, padding: "10px 14px" },
+      textMutedStrong: { color: p.textMuted, fontWeight: 600 },
+      linkText: { fontSize: 11.5, color: p.primary, fontWeight: 600 },
+      grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
+      tagRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+      badgeAware: { ...badgeBase, background: p.accentSoft, color: p.accentText, borderColor: p.accentBorderStrong },
+      badgeUnaware: { ...badgeBase, background: p.negativeSoft, color: p.accent, borderColor: p.negativeBorder },
+      badgeBuild: { ...badgeBase, background: p.chipBg, color: p.primary, borderColor: p.accentBorderStrong },
+      badgeRemove: { ...badgeBase, background: p.secondarySoft, color: p.secondaryText, borderColor: p.secondaryText },
+      stackCol: { display: "flex", flexDirection: "column", gap: 10 },
+      summaryCard: { background: p.accentSoft, border: `1.5px solid ${p.border}`, borderRadius: 16, padding: 14 },
+      suggestionsCard: { background: p.secondarySoft, border: `1.5px solid ${p.border}`, borderRadius: 16, padding: 14 },
+      nudgeCard: { background: p.negativeSoft, border: `1.5px solid ${p.negativeBorder}`, borderRadius: 16, padding: 14 },
+      bodyText: { fontSize: 13, lineHeight: 1.6, color: p.textMuted, margin: 0 },
+      bodyTextSm: { fontSize: 12.5, color: p.textMuted },
+      chatBox: { minHeight: 220, display: "flex", flexDirection: "column", gap: 10, background: p.surface, border: `1.5px solid ${p.border}`, borderRadius: 16, padding: 14 },
+      bubbleRowEnd: { display: "flex", justifyContent: "flex-end" },
+      bubbleRowStart: { display: "flex", justifyContent: "flex-start" },
+      bubbleUser: { maxWidth: "80%", borderRadius: 16, padding: "10px 14px", fontSize: 12.5, lineHeight: 1.5, background: p.primary, color: "#ffffff" },
+      bubbleAssistant: { maxWidth: "80%", borderRadius: 16, padding: "10px 14px", fontSize: 12.5, lineHeight: 1.5, background: p.chipBg, color: p.text },
+      inputRow: { display: "flex", gap: 8 },
+      inputField: { flex: 1, background: p.surface, border: `1.5px solid ${p.border}`, borderRadius: 12, padding: "10px 14px", fontSize: 12.5, color: p.textFaint },
+      switchTrackOn: { width: 42, height: 24, borderRadius: 999, background: p.primary, display: "flex", alignItems: "center", padding: 3, boxSizing: "border-box", justifyContent: "flex-end" },
+      switchThumbOn: { width: 18, height: 18, borderRadius: 999, background: "#ffffff", boxShadow: "0 1px 2px rgba(0,0,0,.3)" },
+      intervalRow: { display: "flex", alignItems: "center", gap: 10, marginTop: 4 },
+      selectField: { border: `1.5px solid ${p.border}`, background: p.surface, color: p.text, borderRadius: 8, padding: "5px 10px", fontSize: 12.5 },
+    };
+  }
+
+  renderVals() {
+    const p = this.palette();
+    const s = this.buildStyles(p);
+    const font = "'Inter', ui-sans-serif, sans-serif";
+    const tab = this.state.tab;
+
+    const pillBase = { fontFamily: font, fontSize: 13, padding: "6px 12px", borderRadius: 8, fontWeight: 500, cursor: "pointer" };
+    const makeTab = (key, label) => ({
+      style:
+        tab === key
+          ? { ...pillBase, background: p.primary, color: "#ffffff", fontWeight: 700, boxShadow: `0 4px 12px -4px ${p.accentBorderStrong}` }
+          : { ...pillBase, color: p.textFaint },
+      onClick: () => this.setTab(key),
+    });
+
+    return {
+      isCheckin: tab === "checkin",
+      isHabits: tab === "habits",
+      isLog: tab === "log",
+      isInsights: tab === "insights",
+      isChat: tab === "chat",
+      isSettings: tab === "settings",
+      s,
+      tabs: {
+        checkin: makeTab("checkin", "Check in"),
+        habits: makeTab("habits", "Habits"),
+        log: makeTab("log", "Log"),
+        insights: makeTab("insights", "Insights"),
+        chat: makeTab("chat", "Reflect"),
+        settings: makeTab("settings", "Settings"),
+      },
+      shell: {
+        page: { minHeight: "100vh", background: p.bg, display: "flex", justifyContent: "center", padding: "64px 16px", boxSizing: "border-box", transition: "background .25s ease" },
+        container: { width: "100%", maxWidth: 640, display: "flex", flexDirection: "column", gap: 24 },
+        headerRow: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+        title: { fontSize: 40, fontWeight: 800, letterSpacing: "-0.02em", color: p.text, margin: 0, fontFamily: font },
+        subtitle: { fontSize: 14, color: p.textMuted, margin: "6px 0 0", fontFamily: font },
+        toggleBtn: { fontFamily: font, fontSize: 13, fontWeight: 700, padding: "6px 12px", borderRadius: 8, background: p.secondarySoft, border: `1.5px solid ${p.border}`, color: p.secondaryText, cursor: "pointer", flexShrink: 0 },
+        modeLabel: p.isDark ? "Light" : "Dark",
+        toggleTheme: () => this.toggleTheme(),
+        navRow: { display: "flex", gap: 4, flexWrap: "wrap" },
+        pageCol: { display: "flex", flexDirection: "column", gap: 18 },
+      },
+    };
+  }
+}
+
+</script>
+</body>
+</html>
