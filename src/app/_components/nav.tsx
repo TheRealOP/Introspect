@@ -7,6 +7,8 @@ import { ThemeToggle } from "./theme-toggle";
 
 const links = [
   { href: "/", label: "Check in" },
+  { href: "/routines", label: "Routines" },
+  { href: "/day", label: "Day" },
   { href: "/habits", label: "Habits" },
   { href: "/log", label: "Log" },
   { href: "/insights", label: "Insights" },

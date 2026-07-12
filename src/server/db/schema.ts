@@ -93,6 +93,57 @@ export const pushSubscriptions = createTable("push_subscriptions", (d) => ({
   createdAt: d.integer().default(sql`(unixepoch())`),
 }));
 
+// User-defined habit chains (Atomic Habits stacking)
+export const routines = createTable("routines", (d) => ({
+  id: d.text().primaryKey(),
+  name: d.text().notNull(),
+  daysOfWeek: d.text(), // JSON: number[] 0=Sun..6=Sat; null = unscheduled
+  anchorMinutes: d.integer(), // minutes since local midnight; null = no anchor time
+  archived: d.integer().default(0),
+  createdAt: d.integer().default(sql`(unixepoch())`),
+}));
+
+export const routineSteps = createTable("routine_steps", (d) => ({
+  id: d.text().primaryKey(),
+  routineId: d.text().notNull(),
+  position: d.integer().notNull(),
+  name: d.text().notNull(),
+  habitId: d.text(), // optional link to an extracted habit — feeds streaks + AI grounding
+  minSeconds: d.integer(), // floor — don't rush (brush teeth ≥ 2 min)
+  maxSeconds: d.integer(), // ceiling — don't overrun (shower ≤ 15 min)
+}));
+
+export const routineRuns = createTable("routine_runs", (d) => ({
+  id: d.text().primaryKey(),
+  routineId: d.text().notNull(),
+  startedAt: d.integer().notNull(),
+  endedAt: d.integer(),
+  status: d.text().notNull(), // active | completed | abandoned
+}));
+
+// One row per step within a run; server timestamps are the timing source of truth
+export const stepRuns = createTable("step_runs", (d) => ({
+  id: d.text().primaryKey(),
+  runId: d.text().notNull(),
+  stepId: d.text().notNull(),
+  name: d.text().notNull(), // snapshot — the step may be renamed/deleted later
+  startedAt: d.integer().notNull(),
+  endedAt: d.integer(),
+  status: d.text().notNull(), // active | completed | skipped | incomplete
+}));
+
+// Calendar-shaped day timeline — stable ids so phase 2 can mirror rows to
+// external calendars (Google, ICS) without reshaping
+export const timelineEvents = createTable("timeline_events", (d) => ({
+  id: d.text().primaryKey(),
+  title: d.text().notNull(),
+  kind: d.text().notNull(), // routine_step | checkin
+  startAt: d.integer().notNull(),
+  endAt: d.integer().notNull(),
+  sourceId: d.text(), // step_run id or entry id
+  createdAt: d.integer().default(sql`(unixepoch())`),
+}));
+
 // Singleton (id = "default") — reminder preferences + last-notified dedupe
 export const reminders = createTable("reminders", (d) => ({
   id: d.text().primaryKey(),

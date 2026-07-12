@@ -4,7 +4,9 @@ import { insightsRouter } from "~/server/api/routers/insights";
 import { journalRouter } from "~/server/api/routers/journal";
 import { pushRouter } from "~/server/api/routers/push";
 import { remindersRouter } from "~/server/api/routers/reminders";
+import { routinesRouter } from "~/server/api/routers/routines";
 import { settingsRouter } from "~/server/api/routers/settings";
+import { timelineRouter } from "~/server/api/routers/timeline";
 import { wikiRouter } from "~/server/api/routers/wiki";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
@@ -17,6 +19,8 @@ export const appRouter = createTRPCRouter({
   feedback: feedbackRouter,
   push: pushRouter,
   reminders: remindersRouter,
+  routines: routinesRouter,
+  timeline: timelineRouter,
 });
 
 // export type definition of API

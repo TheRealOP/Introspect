@@ -35,6 +35,20 @@ export type EntrySnippet = {
   createdAt: number | null;
 };
 
+export type RoutineAdherence = {
+  name: string;
+  completed: number;
+  abandoned: number;
+  totalRuns: number;
+};
+
+export type TimelineSnippet = {
+  title: string;
+  kind: string;
+  startAt: number;
+  endAt: number;
+};
+
 // ---------------------------------------------------------------------------
 // Build the system prompt context block from all available user data
 // ---------------------------------------------------------------------------
@@ -44,6 +58,9 @@ export function buildChatContext(
   wikiEdges: WikiEdge[],
   habits: HabitSummary[],
   recentEntries: EntrySnippet[],
+  routineAdherence: RoutineAdherence[] = [],
+  recentTimeline: TimelineSnippet[] = [],
+  unaccountedSeconds: number | null = null,
 ): string {
   const wikiBlock =
     wikiPages.length > 0
@@ -79,6 +96,30 @@ export function buildChatContext(
           .join("\n\n")
       : "No journal entries yet.";
 
+  const adherenceBlock =
+    routineAdherence.length > 0
+      ? routineAdherence
+          .map(
+            (r) =>
+              `- ${r.name}: ${r.completed} completed, ${r.abandoned} abandoned of ${r.totalRuns} runs (last 7 days)`,
+          )
+          .join("\n")
+      : "No routines defined yet.";
+
+  const timeFmt = (unix: number) =>
+    new Date(unix * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const timelineBlock =
+    recentTimeline.length > 0
+      ? recentTimeline
+          .map((e) => `- ${timeFmt(e.startAt)}–${timeFmt(e.endAt)} [${e.kind}] ${e.title}`)
+          .join("\n")
+      : "No timeline events in the last 24h.";
+
+  const unaccountedLine =
+    unaccountedSeconds !== null
+      ? `\nUnaccounted time in the last 24h: ~${(unaccountedSeconds / 3600).toFixed(1)}h — worth asking about if it's high.`
+      : "";
+
   return `## User Wiki Profile
 ${wikiBlock}
 
@@ -87,6 +128,12 @@ ${edgeBlock}
 
 ## Tracked Habits
 ${habitsBlock}
+
+## Routine Adherence (last 7 days)
+${adherenceBlock}
+
+## Day Timeline (last 24h)
+${timelineBlock}${unaccountedLine}
 
 ## Recent Journal Entries (last 5)
 ${entriesBlock}`;
