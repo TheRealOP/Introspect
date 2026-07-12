@@ -166,16 +166,16 @@ export function AiSettings() {
               disabled={isDisabled}
               className={`flex flex-col gap-1.5 rounded-xl border p-4 text-left transition ${
                 isDisabled
-                  ? "cursor-not-allowed border-text/5 opacity-40"
+                  ? "cursor-not-allowed border-border opacity-40"
                   : isActive
-                    ? "border-primary/40 bg-primary/5"
-                    : "border-text/10 bg-white hover:border-text/20"
+                    ? "border-border-strong bg-accent-soft"
+                    : "border-border bg-surface hover:border-border-strong"
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-base">{meta.icon}</span>
                 {isDisabled && (
-                  <span className="rounded-md border border-text/15 px-1.5 py-0.5 text-[10px] text-text/40">
+                  <span className="rounded-md border-[1.5px] border-border px-1.5 py-0.5 text-[10px] text-text/40">
                     soon
                   </span>
                 )}
@@ -195,7 +195,7 @@ export function AiSettings() {
 
       {/* ── Provider / model config ── */}
       {tier !== "hosted" && (
-        <div className="flex flex-col gap-4 rounded-xl border border-text/10 bg-white p-5">
+        <div className="flex flex-col gap-4 rounded-xl border-[1.5px] border-border bg-surface p-5">
           {/* Provider buttons */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-text/40">
@@ -208,8 +208,8 @@ export function AiSettings() {
                   onClick={() => handleProviderChange(p)}
                   className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                     provider === p
-                      ? "border-primary/50 bg-primary/10 text-primary"
-                      : "border-text/15 bg-text/5 text-text/50 hover:border-text/25 hover:text-text/70"
+                      ? "border-border-strong bg-chip text-accent-text"
+                      : "border-border bg-text/5 text-text/50 hover:border-border-strong hover:text-text/70"
                   }`}
                 >
                   {PROVIDER_LABELS[p] ?? p}
@@ -220,7 +220,7 @@ export function AiSettings() {
 
           {/* Model ID */}
           <input
-            className="w-full rounded-lg border border-text/15 bg-background px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+            className="w-full rounded-lg border-[1.5px] border-border bg-surface px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
             placeholder="Model ID (e.g. llama3.1:8b)"
             value={model}
             onChange={(e) => { setModel(e.target.value); setTestResult(null); }}
@@ -228,7 +228,7 @@ export function AiSettings() {
 
           {/* Compatibility hint */}
           {weakWarning && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <div className="rounded-lg border-[1.5px] border-negative-border bg-negative-soft px-3 py-2 text-xs text-accent">
               <span className="font-semibold">Heads up:</span> {model} may not support structured
               tool calls. Set mode to <strong>Auto</strong> or{" "}
               <strong>JSON</strong>, or use a tool-capable model like{" "}
@@ -240,7 +240,7 @@ export function AiSettings() {
           {/* API key */}
           {needsApiKey && (
             <input
-              className="w-full rounded-lg border border-text/15 bg-background px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+              className="w-full rounded-lg border-[1.5px] border-border bg-surface px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
               placeholder="API key (leave blank to use env)"
               type="password"
               value={apiKey}
@@ -251,7 +251,7 @@ export function AiSettings() {
           {/* Base URL */}
           {needsBaseUrl && (
             <input
-              className="w-full rounded-lg border border-text/15 bg-background px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+              className="w-full rounded-lg border-[1.5px] border-border bg-surface px-3 py-2 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
               placeholder={
                 provider === "ollama"
                   ? "Base URL (default: http://localhost:11434/v1)"
@@ -274,8 +274,8 @@ export function AiSettings() {
                   onClick={() => setMode(m)}
                   className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                     mode === m
-                      ? "border-primary/50 bg-primary/10 text-primary"
-                      : "border-text/15 bg-text/5 text-text/50 hover:border-text/25 hover:text-text/70"
+                      ? "border-border-strong bg-chip text-accent-text"
+                      : "border-border bg-text/5 text-text/50 hover:border-border-strong hover:text-text/70"
                   }`}
                 >
                   {m === "auto" ? "Auto (recommended)" : m === "tool" ? "Tool calls" : "JSON mode"}
@@ -296,14 +296,14 @@ export function AiSettings() {
             <button
               onClick={handleTest}
               disabled={testConnection.isPending || !model}
-              className="rounded-lg border border-text/15 px-4 py-2 text-sm text-text/60 transition hover:border-text/25 hover:text-text/80 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border-[1.5px] border-border px-4 py-2 text-sm text-text/60 transition hover:border-border-strong hover:text-text/80 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {testConnection.isPending ? "Testing…" : "Test connection"}
             </button>
             <button
               onClick={handleSave}
               disabled={updateSettings.isPending || !model}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-on-accent shadow-[0_4px_12px_-4px_var(--border-strong)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {updateSettings.isPending ? "Saving…" : "Save"}
             </button>
@@ -311,7 +311,7 @@ export function AiSettings() {
               <button
                 onClick={() => clearSettings.mutate()}
                 disabled={clearSettings.isPending}
-                className="rounded-lg border border-text/15 px-4 py-2 text-sm text-text/40 transition hover:border-text/25 hover:text-text/60 disabled:opacity-40"
+                className="rounded-lg border-[1.5px] border-border px-4 py-2 text-sm text-text/40 transition hover:border-border-strong hover:text-text/60 disabled:opacity-40"
               >
                 Reset to default
               </button>
@@ -323,8 +323,8 @@ export function AiSettings() {
             <div
               className={`rounded-lg border px-3 py-2 text-xs ${
                 testResult.ok
-                  ? "border-emerald-500/30 bg-emerald-50 text-emerald-700"
-                  : "border-rose-500/30 bg-rose-50 text-rose-700"
+                  ? "border-border-strong bg-chip text-accent-text"
+                  : "border-negative-border bg-negative-soft text-accent"
               }`}
             >
               {testResult.ok ? (
@@ -340,7 +340,7 @@ export function AiSettings() {
 
           {/* Save success */}
           {updateSettings.isSuccess && (
-            <p className="text-xs text-emerald-600">Settings saved.</p>
+            <p className="text-xs text-accent-text">Settings saved.</p>
           )}
         </div>
       )}

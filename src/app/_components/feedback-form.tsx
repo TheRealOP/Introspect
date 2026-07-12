@@ -45,7 +45,7 @@ export function FeedbackForm() {
 
   if (status === "done") {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-text/10 bg-white px-8 py-12 text-center">
+      <div className="flex flex-col items-center gap-4 rounded-xl border-[1.5px] border-border bg-surface px-8 py-12 text-center">
         <span className="text-4xl">🙏</span>
         <p className="text-lg font-semibold text-text">Thanks for the feedback!</p>
         <p className="text-sm text-text/40">
@@ -81,7 +81,7 @@ export function FeedbackForm() {
               onClick={() => setCategory(value)}
               className={`rounded-lg px-3 py-1.5 text-sm transition ${
                 category === value
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-on-accent"
                   : "bg-text/5 text-text/50 hover:bg-text/10 hover:text-text/80"
               }`}
             >
@@ -106,7 +106,7 @@ export function FeedbackForm() {
           required
           rows={5}
           placeholder="Tell me what's on your mind — bugs, missing features, things you love, anything."
-          className="w-full resize-none rounded-xl border border-text/15 bg-white px-4 py-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+          className="w-full resize-none rounded-xl border-[1.5px] border-border bg-surface px-4 py-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
         />
       </div>
 
@@ -124,7 +124,7 @@ export function FeedbackForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-xl border border-text/15 bg-white px-4 py-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+          className="w-full rounded-xl border-[1.5px] border-border bg-surface px-4 py-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
         />
       </div>
 
@@ -139,7 +139,7 @@ export function FeedbackForm() {
       />
 
       {status === "error" && (
-        <p className="text-sm text-rose-600">
+        <p className="text-sm text-accent">
           Something went wrong — please try again.
         </p>
       )}
@@ -147,7 +147,7 @@ export function FeedbackForm() {
       <button
         type="submit"
         disabled={!message.trim() || status === "sending"}
-        className="self-start rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="self-start rounded-xl bg-primary px-6 py-3 text-sm font-bold text-on-accent shadow-[0_4px_12px_-4px_var(--border-strong)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {status === "sending" ? "Sending…" : "Send feedback"}
       </button>

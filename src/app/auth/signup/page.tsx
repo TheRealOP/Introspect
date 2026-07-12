@@ -74,7 +74,7 @@ export default function SignUpPage() {
           </p>
 
           {resendDone ? (
-            <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+            <p className="mb-4 rounded-lg border-[1.5px] border-border-strong bg-chip px-4 py-2 text-sm text-accent-text">
               Verification link resent — check your inbox.
             </p>
           ) : (
@@ -115,7 +115,7 @@ export default function SignUpPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-lg border border-text/15 bg-white px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              className="rounded-lg border-[1.5px] border-border bg-surface px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
               placeholder="you@example.com"
             />
           </div>
@@ -129,13 +129,13 @@ export default function SignUpPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-lg border border-text/15 bg-white px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+              className="rounded-lg border-[1.5px] border-border bg-surface px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
               placeholder="At least 8 characters"
             />
           </div>
 
           {error && (
-            <p className="rounded-lg border border-rose-500/30 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+            <p className="rounded-lg border-[1.5px] border-negative-border bg-negative-soft px-4 py-2 text-sm text-accent">
               {error}
             </p>
           )}
@@ -143,7 +143,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
+            className="mt-2 rounded-lg bg-primary px-4 py-2.5 font-bold text-on-accent shadow-[0_4px_12px_-4px_var(--border-strong)] transition hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? "Creating account…" : "Create account"}
           </button>

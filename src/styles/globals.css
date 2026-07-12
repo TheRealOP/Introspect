@@ -1,18 +1,106 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Theme tokens — from Planning/design_handoff_theme_refresh.
+ * Derived tones must stay in sync with the palette() formulas in
+ * "Introspect Full App Theme.dc.html".
+ */
+:root {
+  /* Base (light) */
+  --text: #040e11;
+  --background: #f7fcfd;
+  --primary: #35aed0;
+  --secondary: #e58bbc;
+  --accent: #db7866;
+
+  /* Derived */
+  --surface: color-mix(in srgb, var(--background) 95%, var(--primary));
+  --border: color-mix(in srgb, var(--primary) 30%, var(--background));
+  --text-muted: color-mix(in srgb, var(--text) 68%, var(--background));
+  --text-faint: color-mix(in srgb, var(--text) 44%, var(--background));
+  --accent-soft: color-mix(in srgb, var(--background) 84%, var(--primary));
+  --accent-text: color-mix(in srgb, var(--primary) 92%, var(--text));
+  --secondary-text: color-mix(in srgb, var(--secondary) 92%, var(--text));
+  --secondary-soft: color-mix(in srgb, var(--background) 80%, var(--secondary));
+  --border-strong: color-mix(in srgb, var(--primary) 55%, var(--background));
+  --chip-bg: color-mix(in srgb, var(--background) 90%, var(--primary));
+  --negative-soft: color-mix(in srgb, var(--background) 88%, var(--accent));
+  --negative-border: color-mix(in srgb, var(--accent) 45%, var(--background));
+  --plan-btn-bg: var(--surface);
+  --on-accent: #ffffff;
+  --card-shadow:
+    0 1px 2px rgba(4, 14, 17, 0.06),
+    0 16px 32px -12px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.dark {
+  /* Base (dark) — primary softened toward bg, secondary lifted toward text */
+  --text: #eef8fb;
+  --background: #15191b;
+  --primary: color-mix(in srgb, #2fa9ca 48%, #15191b);
+  --secondary: color-mix(in srgb, #741a4c 80%, #eef8fb);
+  --accent: #993524;
+
+  /* Derived tones whose mix ratios differ in dark mode */
+  --surface: color-mix(in srgb, var(--background) 91%, var(--primary));
+  --border: color-mix(in srgb, var(--primary) 38%, var(--background));
+  --accent-soft: color-mix(in srgb, var(--background) 95%, var(--primary));
+  --secondary-soft: color-mix(in srgb, var(--background) 65%, var(--secondary));
+  --border-strong: color-mix(in srgb, var(--primary) 68%, var(--background));
+  --chip-bg: color-mix(in srgb, var(--background) 84%, var(--primary));
+  --negative-soft: color-mix(in srgb, var(--background) 78%, var(--accent));
+  --plan-btn-bg: color-mix(in srgb, var(--background) 88%, var(--primary));
+  --card-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 18px 36px -14px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  /* Brand palette */
-  --color-text: #f3f4f6;
-  --color-background: #000000;
-  --color-primary: #7c3aed;
-  --color-secondary: #8b5cf6;
-  --color-accent: #a78bfa;
+  --color-text: var(--text);
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-secondary-text: var(--secondary-text);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-border-strong: var(--border-strong);
+  --color-chip: var(--chip-bg);
+  --color-negative-soft: var(--negative-soft);
+  --color-negative-border: var(--negative-border);
+  --color-plan-btn: var(--plan-btn-bg);
+  --color-on-accent: var(--on-accent);
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-text);
+  background-color: var(--background);
+  color: var(--text);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+/* Smooth theme flip on page + card containers */
+main,
+.bg-surface,
+.bg-accent-soft,
+.bg-secondary-soft,
+.bg-chip,
+.bg-negative-soft,
+.bg-plan-btn {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
 }
