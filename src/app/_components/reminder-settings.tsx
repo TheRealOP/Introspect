@@ -60,7 +60,7 @@ export function ReminderSettings() {
 
   if (isIos() && !isStandalone()) {
     return (
-      <div className="rounded-xl border border-text/10 bg-white p-5">
+      <div className="rounded-xl border-[1.5px] border-border bg-surface p-5">
         <div className="mb-3 flex items-center gap-2">
           <span className="text-lg">🔔</span>
           <h3 className="font-semibold text-text">Check-in Reminders</h3>
@@ -68,11 +68,11 @@ export function ReminderSettings() {
         <p className="mb-3 text-sm text-text/60">
           On iPhone, reminders require Introspect to be installed as an app.
         </p>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-50 p-3">
-          <p className="text-sm font-medium text-amber-700">
+        <div className="rounded-lg border-[1.5px] border-negative-border bg-negative-soft p-3">
+          <p className="text-sm font-medium text-accent">
             Install Introspect first:
           </p>
-          <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-amber-700/80">
+          <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-muted">
             <li>
               Tap the <strong>Share</strong> button{" "}
               <span className="text-base">⎙</span> in Safari
@@ -89,7 +89,7 @@ export function ReminderSettings() {
 
   if (!supportsWebPush()) {
     return (
-      <div className="rounded-xl border border-text/10 bg-white p-5">
+      <div className="rounded-xl border-[1.5px] border-border bg-surface p-5">
         <div className="mb-2 flex items-center gap-2">
           <span className="text-lg">🔔</span>
           <h3 className="font-semibold text-text">Check-in Reminders</h3>
@@ -165,7 +165,7 @@ export function ReminderSettings() {
   }
 
   return (
-    <div className="rounded-xl border border-text/10 bg-white p-5">
+    <div className="rounded-xl border-[1.5px] border-border bg-surface p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">🔔</span>
@@ -181,13 +181,13 @@ export function ReminderSettings() {
         <button
           onClick={handleToggle}
           disabled={saving}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 ${
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 ${
             enabled ? "bg-primary" : "bg-text/20"
           }`}
           aria-label={enabled ? "Disable reminders" : "Enable reminders"}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-surface shadow transition-transform ${
               enabled ? "translate-x-6" : "translate-x-1"
             }`}
           />
@@ -202,7 +202,7 @@ export function ReminderSettings() {
             value={intervalHours}
             onChange={(e) => handleIntervalChange(Number(e.target.value))}
             disabled={saving}
-            className="rounded-lg border border-text/20 bg-background px-3 py-1 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="rounded-lg border-[1.5px] border-border bg-surface px-3 py-1 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           >
             {[1, 2, 3, 4, 6, 8, 12, 24].map((h) => (
               <option key={h} value={h}>
@@ -215,7 +215,7 @@ export function ReminderSettings() {
       )}
 
       {error && (
-        <p className="mt-3 text-sm text-rose-600">{error}</p>
+        <p className="mt-3 text-sm text-accent">{error}</p>
       )}
 
       {saving && (

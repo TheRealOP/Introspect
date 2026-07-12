@@ -4,9 +4,15 @@ import { useRef, useState } from "react";
 import { api } from "~/trpc/react";
 
 const sentimentDot: Record<string, string> = {
-  positive: "bg-emerald-500",
-  negative: "bg-rose-500",
+  positive: "bg-primary",
+  negative: "bg-accent",
   neutral: "bg-text/20",
+};
+
+const sentimentChip: Record<string, string> = {
+  positive: "border-border-strong bg-chip",
+  negative: "border-negative-border bg-negative-soft",
+  neutral: "border-border bg-chip",
 };
 
 type AnalysisResult = {
@@ -118,7 +124,7 @@ export function JournalEditor() {
       {/* ------------------------------------------------------------------ */}
       <div className="flex flex-col gap-3">
         <textarea
-          className="min-h-[140px] w-full resize-none rounded-xl border border-text/15 bg-white p-4 text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+          className="min-h-[140px] w-full resize-none rounded-xl border-[1.5px] border-border bg-surface p-4 text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
           placeholder="What have you done since your last check-in?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -133,7 +139,7 @@ export function JournalEditor() {
               <button
                 onClick={() => analyzeAll.mutate()}
                 disabled={analyzeAll.isPending}
-                className="rounded-lg border border-text/15 px-4 py-2 text-sm text-text/50 transition hover:border-text/25 hover:text-text/70 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg border-[1.5px] border-border px-4 py-2 text-sm text-text/50 transition hover:border-border-strong hover:text-text/70 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {analyzeAll.isPending ? "Analyzing all…" : "Analyze all entries"}
               </button>
@@ -141,7 +147,7 @@ export function JournalEditor() {
             <button
               onClick={handleSave}
               disabled={isAnalyzing || !content.trim()}
-              className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-primary px-5 py-2 text-sm font-bold text-on-accent shadow-[0_4px_12px_-4px_var(--border-strong)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {create.isPending
                 ? "Logging…"
@@ -157,9 +163,9 @@ export function JournalEditor() {
       {/* Analyzing state                                                      */}
       {/* ------------------------------------------------------------------ */}
       {analyze.isPending && (
-        <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <div className="flex items-center gap-3 rounded-xl border-[1.5px] border-border bg-accent-soft p-4">
           <span className="animate-pulse text-primary">✦</span>
-          <p className="text-sm text-primary/80">
+          <p className="text-sm text-accent-text">
             Introspect is analysing your check-in…
           </p>
         </div>
@@ -172,11 +178,11 @@ export function JournalEditor() {
         <div className="flex flex-col gap-4">
           {/* Committed plan banner */}
           {committedPlan ? (
-            <div className="flex flex-col gap-1 rounded-xl border border-emerald-500/30 bg-emerald-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700/70">
+            <div className="flex flex-col gap-1 rounded-xl border-[1.5px] border-border-strong bg-chip p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-accent-text">
                 Your plan until next check-in
               </p>
-              <p className="text-sm leading-relaxed text-emerald-900">{committedPlan}</p>
+              <p className="text-sm leading-relaxed text-text">{committedPlan}</p>
               <button
                 onClick={() => {
                   setCommittedPlan(null);
@@ -189,9 +195,9 @@ export function JournalEditor() {
               </button>
             </div>
           ) : (
-            <>
+            <div className="flex flex-col gap-4 rounded-2xl border-[1.5px] border-border bg-accent-soft p-4">
               <div className="flex flex-col gap-1">
-                <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">
+                <p className="text-xs font-bold uppercase tracking-widest text-accent-text">
                   What&apos;s your plan until the next check-in?
                 </p>
                 <p className="text-xs text-text/40">
@@ -213,7 +219,7 @@ export function JournalEditor() {
                       });
                     }}
                     disabled={isSaving}
-                    className="rounded-xl border border-text/10 bg-white p-4 text-left text-sm leading-relaxed text-text/70 transition hover:border-primary/30 hover:bg-primary/5 hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl border-[1.5px] border-border-strong bg-plan-btn p-4 text-left text-sm leading-relaxed text-text/70 transition hover:bg-chip hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {plan.action}
                   </button>
@@ -224,7 +230,7 @@ export function JournalEditor() {
               {!showCustomInput ? (
                 <button
                   onClick={() => setShowCustomInput(true)}
-                  className="self-start rounded-lg border border-text/15 px-4 py-2 text-sm text-text/40 transition hover:border-text/25 hover:text-text/60"
+                  className="self-start rounded-lg border-[1.5px] border-border px-4 py-2 text-sm text-text/40 transition hover:border-border-strong hover:text-text/60"
                 >
                   + Write my own plan
                 </button>
@@ -232,7 +238,7 @@ export function JournalEditor() {
                 <div className="flex flex-col gap-2">
                   <textarea
                     autoFocus
-                    className="min-h-[80px] w-full resize-none rounded-xl border border-text/15 bg-white p-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
+                    className="min-h-[80px] w-full resize-none rounded-xl border-[1.5px] border-border bg-surface p-3 text-sm text-text placeholder-text/30 outline-none transition focus:border-primary/40 focus:ring-1 focus:ring-primary/10"
                     placeholder="e.g. Finish the auth flow, then take a 15-min walk before dinner."
                     value={customPlan}
                     onChange={(e) => setCustomPlan(e.target.value)}
@@ -245,7 +251,7 @@ export function JournalEditor() {
                     <button
                       onClick={handleCommitCustomPlan}
                       disabled={!customPlan.trim() || isSaving}
-                      className="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg bg-primary px-4 py-1.5 text-sm font-bold text-on-accent shadow-[0_4px_12px_-4px_var(--border-strong)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {isSaving ? "Saving…" : "Commit plan"}
                     </button>
@@ -261,12 +267,12 @@ export function JournalEditor() {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {/* Habits extracted from this entry */}
           {analysisResult.habits.length > 0 && (
-            <div className="rounded-xl border border-text/10 bg-white p-4">
+            <div className="rounded-xl border-[1.5px] border-border bg-surface p-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-text/40">
                 Habits spotted this check-in
               </p>
@@ -274,7 +280,7 @@ export function JournalEditor() {
                 {analysisResult.habits.map((h) => (
                   <span
                     key={h.name}
-                    className="flex items-center gap-1.5 rounded-full border border-text/10 bg-background px-3 py-1 text-xs text-text/80"
+                    className={`flex items-center gap-1.5 rounded-full border-[1.5px] px-3 py-1 text-xs text-text/80 ${sentimentChip[h.sentiment] ?? "border-border bg-chip"}`}
                   >
                     <span
                       className={`h-2 w-2 rounded-full ${sentimentDot[h.sentiment] ?? "bg-text/20"}`}

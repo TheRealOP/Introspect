@@ -4,8 +4,8 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 
 const sentimentDot: Record<string, string> = {
-  positive: "bg-emerald-500",
-  negative: "bg-rose-500",
+  positive: "bg-primary",
+  negative: "bg-accent",
   neutral: "bg-text/20",
 };
 
@@ -18,9 +18,9 @@ const sentimentLabel: Record<string, string> = {
 const sentiments = ["positive", "neutral", "negative"] as const;
 
 const sentimentButton: Record<string, string> = {
-  positive: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700",
-  negative: "border-rose-500/40 bg-rose-500/10 text-rose-700",
-  neutral: "border-text/20 bg-text/5 text-text/50",
+  positive: "border-border-strong bg-chip text-accent-text",
+  negative: "border-negative-border bg-negative-soft text-accent",
+  neutral: "border-border bg-text/5 text-text/50",
 };
 
 export function HabitsView() {
@@ -58,7 +58,7 @@ export function HabitsView() {
       {allHabits.map((h) => (
         <div
           key={h.id}
-          className="flex flex-col gap-3 rounded-xl border border-text/10 bg-white px-4 py-4"
+          className="flex flex-col gap-3 rounded-xl border-[1.5px] border-border bg-surface px-4 py-4"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
@@ -70,14 +70,14 @@ export function HabitsView() {
             <div className="flex shrink-0 items-center gap-2">
               <button
                 onClick={() => setEditingId(editingId === h.id ? null : h.id)}
-                className="rounded-lg border border-text/15 px-2.5 py-1 text-xs text-text/40 transition hover:border-text/25 hover:text-text/70"
+                className="rounded-lg border-[1.5px] border-border px-2.5 py-1 text-xs text-text/40 transition hover:border-border-strong hover:text-text/70"
               >
                 {editingId === h.id ? "Cancel" : "Edit"}
               </button>
               <button
                 onClick={() => deleteHabit.mutate({ id: h.id })}
                 disabled={deleteHabit.isPending}
-                className="rounded-lg border border-rose-500/20 px-2.5 py-1 text-xs text-rose-500/70 transition hover:border-rose-500/40 hover:text-rose-600 disabled:opacity-40"
+                className="rounded-lg border border-negative-border px-2.5 py-1 text-xs text-accent transition hover:bg-negative-soft disabled:opacity-40"
               >
                 Delete
               </button>
@@ -97,7 +97,7 @@ export function HabitsView() {
           </div>
 
           {editingId === h.id && (
-            <div className="flex flex-col gap-2 border-t border-text/10 pt-3">
+            <div className="flex flex-col gap-2 border-t border-border pt-3">
               <p className="text-xs text-text/40">Change sentiment:</p>
               <div className="flex gap-2">
                 {sentiments.map((s) => (
@@ -108,7 +108,7 @@ export function HabitsView() {
                     className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
                       h.sentiment === s
                         ? sentimentButton[s]
-                        : "border-text/15 bg-text/5 text-text/40 hover:border-text/25 hover:text-text/60"
+                        : "border-border bg-text/5 text-text/40 hover:border-border-strong hover:text-text/60"
                     }`}
                   >
                     {s}

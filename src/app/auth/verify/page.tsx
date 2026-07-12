@@ -33,7 +33,7 @@ function VerifyContent() {
     return (
       <div className="w-full max-w-sm text-center">
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-4xl">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-chip text-4xl">
             ✓
           </div>
         </div>
@@ -53,7 +53,7 @@ function VerifyContent() {
   return (
     <div className="w-full max-w-sm text-center">
       <div className="mb-6 flex justify-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 text-4xl">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-negative-soft text-4xl">
           ⚠️
         </div>
       </div>
@@ -74,14 +74,14 @@ function VerifyContent() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-text/15 bg-white px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+            className="rounded-lg border-[1.5px] border-border bg-surface px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
             placeholder="you@example.com"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-primary px-4 py-2.5 font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
+          className="rounded-lg bg-primary px-4 py-2.5 font-bold text-on-accent shadow-[0_4px_12px_-4px_var(--border-strong)] transition hover:bg-primary/90 disabled:opacity-50"
         >
           {loading ? "Sending…" : "Send new verification link"}
         </button>

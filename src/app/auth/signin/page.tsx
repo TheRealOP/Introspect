@@ -48,7 +48,7 @@ function SignInForm() {
       <p className="mb-8 text-text/50">Sign in to your account</p>
 
       {verified && (
-        <div className="mb-6 rounded-lg border border-emerald-500/30 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="mb-6 rounded-lg border-[1.5px] border-border-strong bg-chip px-4 py-3 text-sm text-accent-text">
           ✓ Email verified — you can now sign in.
         </div>
       )}
@@ -62,7 +62,7 @@ function SignInForm() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border border-text/15 bg-white px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+            className="rounded-lg border-[1.5px] border-border bg-surface px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
             placeholder="you@example.com"
           />
         </div>
@@ -75,17 +75,17 @@ function SignInForm() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-lg border border-text/15 bg-white px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+            className="rounded-lg border-[1.5px] border-border bg-surface px-4 py-2.5 text-text placeholder-text/30 outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
             placeholder="••••••••"
           />
         </div>
 
         {error && (
-          <div className="rounded-lg border border-rose-500/30 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+          <div className="rounded-lg border-[1.5px] border-negative-border bg-negative-soft px-4 py-2 text-sm text-accent">
             <p>{error}</p>
-            <p className="mt-1 text-rose-600/70">
+            <p className="mt-1 text-accent/80">
               Need to verify?{" "}
-              <Link href="/auth/verify?error=resend" className="underline hover:text-rose-700">
+              <Link href="/auth/verify?error=resend" className="underline hover:text-accent">
                 Resend verification email
               </Link>
             </p>
@@ -95,7 +95,7 @@ function SignInForm() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
+          className="mt-2 rounded-lg bg-primary px-4 py-2.5 font-bold text-on-accent shadow-[0_4px_12px_-4px_var(--border-strong)] transition hover:bg-primary/90 disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
