@@ -235,6 +235,8 @@
       <span class="phase-chip done">✓ Phase 5 · Auth + per-user Turso DBs + Vercel deploy</span>
       <span class="phase-chip done">✓ 2026-07-07 · Audit fixes · JWT-only Turso creds · email verification · cron + PWA whitelist · flat UI palette</span>
       <span class="phase-chip done">✓ 2026-07-11 · Theme refresh · light/dark tokens in globals.css (color-mix) · theme toggle + localStorage · Inter font · design source: Planning/design_handoff_theme_refresh</span>
+      <span class="phase-chip done">✓ 2026-07-12 · Routines (habit chains + tap-to-advance runs) · Day timeline (calendar-shaped events, unaccounted gaps) · AI chain suggestions · missed-routine cron nudge</span>
+      <span class="phase-chip future">Phase 2 (routines) · external calendar mirror (Google/ICS) via timeline_events externalId/syncedAt · precise anchor-time reminders</span>
     </div>
   </div>
 
@@ -256,6 +258,8 @@
           <code>src/app/page.tsx</code> — <code>/</code> check-in RSC shell <span class="tag tag-done">done</span><br/>
           <code>src/app/habits/page.tsx</code> — <code>/habits</code> all habits + edit/delete <span class="tag tag-done">done</span><br/>
           <code>src/app/log/page.tsx</code> — <code>/log</code> full check-in history <span class="tag tag-done">done</span><br/>
+          <code>src/app/routines/page.tsx</code> — <code>/routines</code> habit-chain builder + run screen <span class="tag tag-done">done</span><br/>
+          <code>src/app/day/page.tsx</code> — <code>/day</code> day timeline (events + unaccounted gaps) <span class="tag tag-done">done</span><br/>
           <code>src/app/insights/page.tsx</code> — <code>/insights</code> streaks + AI profile <span class="tag tag-done">done</span><br/>
           <code>src/app/chat/page.tsx</code> — <code>/chat</code> streaming coach + wiki graph <span class="tag tag-done">done</span><br/>
           <code>src/app/settings/page.tsx</code> — <code>/settings</code> AI provider + reminders <span class="tag tag-done">done</span><br/>
@@ -266,6 +270,9 @@
           <code>src/app/_components/nav.tsx</code> — shared nav bar (active-link highlight) <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/journal.tsx</code> — textarea + nudge picker only (log/habits moved out) <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/habits-view.tsx</code> — habits list + inline sentiment edit + delete <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/routines-view.tsx</code> — routine list/builder · steps w/ min-max + habit link · days/anchor schedule · AI suggest <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/routine-run.tsx</code> — refresh-proof run screen · stopwatch/countdown from server timestamps · Done/Skip/Abandon <span class="tag tag-done">done</span><br/>
+          <code>src/app/_components/day-view.tsx</code> — vertical day timeline · accounted vs unaccounted totals · date nav <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/log-view.tsx</code> — paginated check-in log display <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/insights.tsx</code> — streaks + AI profile + nudge stats (inline settings panel removed → /settings) <span class="tag tag-done">done</span><br/>
           <code>src/app/_components/ai-settings.tsx</code> — tier cards (hosted/BYO/self-host), provider picker, mode selector, test-connection <span class="tag tag-done">done</span><br/>
@@ -299,7 +306,7 @@
           <code>src/app/api/verify/route.ts</code> · <code>resend</code> — email verification<br/>
           <code>src/app/api/chat/route.ts</code> — streaming chat + wiki updates<br/>
           <code>src/app/api/feedback/route.ts</code> — public feedback intake<br/>
-          <code>src/app/api/cron/reminders/route.ts</code> — Vercel Cron reminder sender
+          <code>src/app/api/cron/reminders/route.ts</code> — Vercel Cron (daily) · check-in reminders + missed-routine nudges (UTC day boundaries)
         </div>
       </div>
       <div class="card accent-gray">
@@ -339,11 +346,13 @@
         <div class="card-title">other routers <span class="tag tag-done">done</span></div>
         <div class="card-sub">
           <code>src/server/api/routers/</code><br/>
-          <b>wiki</b> · <b>push</b> · <b>reminders</b> · <b>feedback</b><br/>
+          <b>wiki</b> · <b>push</b> · <b>reminders</b> · <b>feedback</b> · <b>routines</b> · <b>timeline</b><br/>
           <b>wiki</b>: pages · edges · page lookup · persisted chat history<br/>
           <b>push</b>: subscribe · unsubscribe · status by endpoint<br/>
           <b>reminders</b>: get · update singleton reminder preferences<br/>
           <b>feedback</b>: admin list from central feedback table<br/>
+          <b>routines</b>: list · create/update/delete · addStep/updateStep/removeStep/reorderSteps · startRun/activeRun/completeStep/skipStep/abandonRun · suggestSteps (AI) · runHistory<br/>
+          <b>timeline</b>: day(start, end) → events + computed unaccounted gaps (client passes local-day bounds)<br/>
           <br/>
           Scaffold <code>post</code> router removed in the<br/>
           2026-07-07 repo cleanup.
@@ -604,6 +613,30 @@
           <tr><td><code>intervalHours</code></td><td>INTEGER</td><td>default 3</td></tr>
           <tr><td><code>lastNotifiedAt</code></td><td>INTEGER</td><td>unix timestamp for cron dedupe</td></tr>
           <tr><td><code>updatedAt</code></td><td>INTEGER</td><td>unix timestamp</td></tr>
+        </table>
+      </div>
+
+      <div class="card accent-green" style="min-width: 360px;">
+        <div class="card-title">routines tables <span class="tag tag-done">done</span></div>
+        <div class="card-sub" style="margin-bottom:6px;">
+          Habit chains + honest run history. DDL synced in 3 places: schema.ts · signup USER_DB_INIT_SQL · ensure-tables.ts.<br/><br/>
+          <b>routines</b> <code>introspect_routines</code>: id · name · daysOfWeek (JSON 0=Sun..6) · anchorMinutes · archived · createdAt<br/>
+          <b>routine_steps</b> <code>introspect_routine_steps</code>: id · routineId · position · name · habitId (optional link → habit streaks + AI grounding) · minSeconds (don't rush) · maxSeconds (don't overrun)<br/>
+          <b>routine_runs</b> <code>introspect_routine_runs</code>: id · routineId · startedAt · endedAt · status (active/completed/abandoned)<br/>
+          <b>step_runs</b> <code>introspect_step_runs</code>: id · runId · stepId · name snapshot · startedAt · endedAt · status (active/completed/skipped/incomplete) — server timestamps are the timing source of truth
+        </div>
+      </div>
+
+      <div class="card accent-green" style="min-width: 360px;">
+        <div class="card-title">timeline_events <code>introspect_timeline_events</code> <span class="tag tag-done">done</span></div>
+        <div class="card-sub" style="margin-bottom:6px;">Calendar-shaped day record. Written on step completion (kind=routine_step) and check-in (kind=checkin, span = previous entry → now, capped 12h). Stable ids so phase 2 can mirror to external calendars (add externalId/syncedAt later).</div>
+        <table class="schema-table">
+          <tr><th>column</th><th>type</th><th>notes</th></tr>
+          <tr><td class="pk"><code>id</code></td><td>TEXT</td><td>uuid</td></tr>
+          <tr><td><code>title</code></td><td>TEXT</td><td>step name or entry snippet</td></tr>
+          <tr><td><code>kind</code></td><td>TEXT</td><td>routine_step | checkin</td></tr>
+          <tr><td><code>startAt</code> / <code>endAt</code></td><td>INTEGER</td><td>unix seconds</td></tr>
+          <tr><td><code>sourceId</code></td><td>TEXT</td><td>step_run id or entry id</td></tr>
         </table>
       </div>
     </div>

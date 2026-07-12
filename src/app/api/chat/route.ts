@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, gte } from "drizzle-orm";
 import { v4 as uuid } from "uuid";
 import { streamText } from "ai";
 import { waitUntil } from "@vercel/functions";
@@ -11,6 +11,9 @@ import {
   entries,
   habits,
   habitOccurrences,
+  routineRuns,
+  routines,
+  timelineEvents,
   wikiEdges,
   wikiPages,
 } from "~/server/db/schema";
@@ -48,17 +51,56 @@ export async function POST(req: Request) {
   // The last message is always from the user
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
 
+  const nowSec = Math.floor(Date.now() / 1000);
+
   // Load context in parallel
-  const [allWikiPages, allWikiEdges, allHabits, recentEntries] = await Promise.all([
-    db.select().from(wikiPages),
-    db.select().from(wikiEdges),
-    db.select().from(habits),
-    db
-      .select({ content: entries.content, createdAt: entries.createdAt })
-      .from(entries)
-      .orderBy(desc(entries.createdAt))
-      .limit(5),
-  ]);
+  const [allWikiPages, allWikiEdges, allHabits, recentEntries, allRoutines, recentRuns, recentEvents] =
+    await Promise.all([
+      db.select().from(wikiPages),
+      db.select().from(wikiEdges),
+      db.select().from(habits),
+      db
+        .select({ content: entries.content, createdAt: entries.createdAt })
+        .from(entries)
+        .orderBy(desc(entries.createdAt))
+        .limit(5),
+      db.select().from(routines),
+      db
+        .select()
+        .from(routineRuns)
+        .where(gte(routineRuns.startedAt, nowSec - 7 * 86400)),
+      db
+        .select()
+        .from(timelineEvents)
+        .where(gte(timelineEvents.endAt, nowSec - 86400))
+        .orderBy(desc(timelineEvents.startAt))
+        .limit(30),
+    ]);
+
+  // Routine adherence over the last 7 days
+  const routineAdherence = allRoutines
+    .map((r) => {
+      const runs = recentRuns.filter((run) => run.routineId === r.id);
+      return {
+        name: r.name,
+        completed: runs.filter((run) => run.status === "completed").length,
+        abandoned: runs.filter((run) => run.status === "abandoned").length,
+        totalRuns: runs.length,
+      };
+    })
+    .filter((r) => r.totalRuns > 0 || allRoutines.length <= 5);
+
+  // Unaccounted time in the last 24h = window minus merged event coverage
+  const windowStart = nowSec - 86400;
+  let covered = 0;
+  let cursor = windowStart;
+  for (const e of [...recentEvents].sort((a, b) => a.startAt - b.startAt)) {
+    const s = Math.max(e.startAt, cursor);
+    const end = Math.min(e.endAt, nowSec);
+    if (end > s) covered += end - s;
+    cursor = Math.max(cursor, end);
+  }
+  const unaccountedSeconds = Math.max(0, 86400 - covered);
 
   // Build habit summaries (include occurrence counts from habitOccurrences for streak approximation)
   const allOccurrences = await db.select().from(habitOccurrences);
@@ -89,6 +131,11 @@ export async function POST(req: Request) {
     })),
     habitSummaries,
     recentEntries,
+    routineAdherence,
+    [...recentEvents]
+      .sort((a, b) => a.startAt - b.startAt)
+      .map((e) => ({ title: e.title, kind: e.kind, startAt: e.startAt, endAt: e.endAt })),
+    unaccountedSeconds,
   );
 
   const { model, mode } = await resolveAi(db);
