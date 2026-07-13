@@ -50,6 +50,48 @@ const CREATE_TABLE_STATEMENTS = [
     \`lastNotifiedAt\` INTEGER,
     \`updatedAt\` INTEGER
   )`,
+  `CREATE TABLE IF NOT EXISTS \`introspect_routines\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`name\` TEXT NOT NULL,
+    \`daysOfWeek\` TEXT,
+    \`anchorMinutes\` INTEGER,
+    \`archived\` INTEGER DEFAULT 0,
+    \`createdAt\` INTEGER DEFAULT (unixepoch())
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`introspect_routine_steps\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`routineId\` TEXT NOT NULL,
+    \`position\` INTEGER NOT NULL,
+    \`name\` TEXT NOT NULL,
+    \`habitId\` TEXT,
+    \`minSeconds\` INTEGER,
+    \`maxSeconds\` INTEGER
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`introspect_routine_runs\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`routineId\` TEXT NOT NULL,
+    \`startedAt\` INTEGER NOT NULL,
+    \`endedAt\` INTEGER,
+    \`status\` TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`introspect_step_runs\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`runId\` TEXT NOT NULL,
+    \`stepId\` TEXT NOT NULL,
+    \`name\` TEXT NOT NULL,
+    \`startedAt\` INTEGER NOT NULL,
+    \`endedAt\` INTEGER,
+    \`status\` TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS \`introspect_timeline_events\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`title\` TEXT NOT NULL,
+    \`kind\` TEXT NOT NULL,
+    \`startAt\` INTEGER NOT NULL,
+    \`endAt\` INTEGER NOT NULL,
+    \`sourceId\` TEXT,
+    \`createdAt\` INTEGER DEFAULT (unixepoch())
+  )`,
 ];
 
 // Columns added to existing tables after initial launch. Each is attempted

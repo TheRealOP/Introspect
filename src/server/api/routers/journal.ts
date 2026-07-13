@@ -6,7 +6,7 @@ import { extractFromEntry } from "~/server/ai/extract";
 import { resolveAi } from "~/server/ai/provider";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import type { UserDb } from "~/server/db";
-import { entries, habitOccurrences, habits, nudges } from "~/server/db/schema";
+import { entries, habitOccurrences, habits, nudges, timelineEvents } from "~/server/db/schema";
 
 // ---------------------------------------------------------------------------
 // Shared habit upsert helper — also logs a sighting for streak tracking
@@ -63,8 +63,32 @@ export const journalRouter = createTRPCRouter({
   create: publicProcedure
     .input(z.object({ content: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
+      const [previous] = await ctx.db
+        .select({ createdAt: entries.createdAt })
+        .from(entries)
+        .orderBy(desc(entries.createdAt))
+        .limit(1);
+
       const id = uuid();
       await ctx.db.insert(entries).values({ id, content: input.content });
+
+      // Timeline block spanning from the previous check-in to now, capped at
+      // 12h so the first entry after a long absence doesn't swallow the day
+      const nowSec = Math.floor(Date.now() / 1000);
+      const startAt = Math.max(previous?.createdAt ?? nowSec - 3600, nowSec - 12 * 3600);
+      if (startAt < nowSec) {
+        const title =
+          input.content.length > 60 ? `${input.content.slice(0, 57)}…` : input.content;
+        await ctx.db.insert(timelineEvents).values({
+          id: uuid(),
+          title,
+          kind: "checkin",
+          startAt,
+          endAt: nowSec,
+          sourceId: id,
+        });
+      }
+
       return { id };
     }),
 
