@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "~/trpc/react";
+import { useEffect, useRef, useState } from "react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { RoutineRun } from "./routine-run";
+
+type RoutineWithSteps = RouterOutputs["routines"]["list"][number];
+type Step = RoutineWithSteps["steps"][number];
 
 const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -74,6 +77,7 @@ export function RoutinesView() {
     },
   });
   const addStep = api.routines.addStep.useMutation({ onSuccess: invalidate });
+  const updateStep = api.routines.updateStep.useMutation({ onSuccess: invalidate });
   const removeStep = api.routines.removeStep.useMutation({ onSuccess: invalidate });
   const reorderSteps = api.routines.reorderSteps.useMutation({ onSuccess: invalidate });
   const startRun = api.routines.startRun.useMutation({
@@ -161,66 +165,29 @@ export function RoutinesView() {
               </div>
             </div>
 
-            {/* Steps */}
-            {r.steps.length > 0 && (
-              <ol className="flex flex-col gap-1.5">
-                {r.steps.map((s, i) => (
-                  <li key={s.id} className="flex items-center gap-2 text-sm text-text/70">
-                    <span className="w-5 text-xs text-text/30 tabular-nums">{i + 1}.</span>
-                    <span className="flex-1 truncate">{s.name}</span>
-                    {s.minSeconds !== null && (
-                      <span className="text-xs text-text/40">≥{fmtDuration(s.minSeconds)}</span>
-                    )}
-                    {s.maxSeconds !== null && (
-                      <span className="text-xs text-text/40">≤{fmtDuration(s.maxSeconds)}</span>
-                    )}
-                    {editing && (
-                      <span className="flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            const ids = r.steps.map((x) => x.id);
-                            if (i === 0) return;
-                            [ids[i - 1], ids[i]] = [ids[i]!, ids[i - 1]!];
-                            reorderSteps.mutate({ routineId: r.id, orderedStepIds: ids });
-                          }}
-                          disabled={i === 0 || reorderSteps.isPending}
-                          className="rounded border border-border px-1.5 text-xs text-text/40 transition hover:text-text/70 disabled:opacity-30"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          onClick={() => {
-                            const ids = r.steps.map((x) => x.id);
-                            if (i === ids.length - 1) return;
-                            [ids[i], ids[i + 1]] = [ids[i + 1]!, ids[i]!];
-                            reorderSteps.mutate({ routineId: r.id, orderedStepIds: ids });
-                          }}
-                          disabled={i === r.steps.length - 1 || reorderSteps.isPending}
-                          className="rounded border border-border px-1.5 text-xs text-text/40 transition hover:text-text/70 disabled:opacity-30"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          onClick={() => removeStep.mutate({ id: s.id })}
-                          disabled={removeStep.isPending}
-                          className="rounded border border-negative-border px-1.5 text-xs text-accent transition hover:bg-negative-soft disabled:opacity-30"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            )}
+            <StepList
+              steps={r.steps}
+              editing={editing}
+              habits={habitList ?? []}
+              reorderPending={reorderSteps.isPending}
+              updatePending={updateStep.isPending}
+              removePending={removeStep.isPending}
+              onReorder={(orderedStepIds) =>
+                reorderSteps.mutate({ routineId: r.id, orderedStepIds })
+              }
+              onUpdate={(values) => updateStep.mutate(values)}
+              onRemove={(id) => removeStep.mutate({ id })}
+            />
 
             {editing && (
               <div className="flex flex-col gap-4 border-t border-border pt-3">
-                <AddStepForm
-                  routineId={r.id}
+                <StepForm
                   habits={habitList ?? []}
                   pending={addStep.isPending}
-                  onAdd={(values) => addStep.mutate(values)}
+                  submitLabel="Add step"
+                  placeholder="Add a step — e.g. Brush teeth"
+                  resetOnSubmit
+                  onSubmit={(values) => addStep.mutate({ routineId: r.id, ...values })}
                 />
 
                 {/* Schedule */}
@@ -321,51 +288,241 @@ export function RoutinesView() {
   );
 }
 
-function AddStepForm({
-  routineId,
+// ---------------------------------------------------------------------------
+// Step list with pointer-based drag reorder (works with mouse AND touch —
+// native HTML5 drag events don't fire on touch devices) + inline editing
+// ---------------------------------------------------------------------------
+
+function StepList({
+  steps,
+  editing,
+  habits,
+  reorderPending,
+  updatePending,
+  removePending,
+  onReorder,
+  onUpdate,
+  onRemove,
+}: {
+  steps: Step[];
+  editing: boolean;
+  habits: { id: string; name: string }[];
+  reorderPending: boolean;
+  updatePending: boolean;
+  removePending: boolean;
+  onReorder: (orderedStepIds: string[]) => void;
+  onUpdate: (values: {
+    id: string;
+    name: string;
+    habitId: string | null;
+    minSeconds: number | null;
+    maxSeconds: number | null;
+  }) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [order, setOrder] = useState<string[] | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [editingStepId, setEditingStepId] = useState<string | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLLIElement>());
+  // Refs mirror state so window-level pointer handlers see current values
+  const orderRef = useRef<string[] | null>(null);
+
+  const serverKey = steps.map((s) => s.id).join(",");
+
+  // Drop the local order once the server list matches it (post-refetch)
+  useEffect(() => {
+    if (orderRef.current && orderRef.current.join(",") === serverKey) {
+      orderRef.current = null;
+      setOrder(null);
+    }
+  }, [serverKey]);
+
+  const ordered = order
+    ? (order.map((id) => steps.find((s) => s.id === id)).filter(Boolean) as Step[])
+    : steps;
+
+  const startDrag = (e: React.PointerEvent, id: string) => {
+    if (!editing || reorderPending) return;
+    e.preventDefault();
+    setDraggingId(id);
+    orderRef.current = ordered.map((s) => s.id);
+    setOrder(orderRef.current);
+    const startOrder = [...orderRef.current];
+
+    const move = (ev: PointerEvent) => {
+      for (const [otherId, el] of rowRefs.current) {
+        if (otherId === id || !el) continue;
+        const rect = el.getBoundingClientRect();
+        if (ev.clientY > rect.top && ev.clientY < rect.bottom) {
+          const cur = orderRef.current ?? [];
+          const from = cur.indexOf(id);
+          const to = cur.indexOf(otherId);
+          if (from !== -1 && to !== -1 && from !== to) {
+            const next = [...cur];
+            next.splice(from, 1);
+            next.splice(to, 0, id);
+            orderRef.current = next;
+            setOrder(next);
+          }
+          break;
+        }
+      }
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      setDraggingId(null);
+      const final = orderRef.current;
+      if (final && final.join(",") !== startOrder.join(",")) {
+        onReorder(final);
+      } else {
+        orderRef.current = null;
+        setOrder(null);
+      }
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
+  if (steps.length === 0) return null;
+
+  return (
+    <ol className="flex flex-col gap-1.5">
+      {ordered.map((s, i) => {
+        if (editingStepId === s.id && editing) {
+          return (
+            <li key={s.id} className="rounded-lg border border-border-strong bg-text/5 px-2 py-2">
+              <StepForm
+                habits={habits}
+                pending={updatePending}
+                submitLabel="Save"
+                placeholder="Step name"
+                initial={s}
+                onCancel={() => setEditingStepId(null)}
+                onSubmit={(values) => {
+                  onUpdate({ id: s.id, ...values });
+                  setEditingStepId(null);
+                }}
+              />
+            </li>
+          );
+        }
+        return (
+          <li
+            key={s.id}
+            ref={(el) => {
+              if (el) rowRefs.current.set(s.id, el);
+              else rowRefs.current.delete(s.id);
+            }}
+            className={`flex items-center gap-2 rounded-lg text-sm text-text/70 transition ${
+              draggingId === s.id ? "border border-border-strong bg-text/5 opacity-80" : ""
+            }`}
+          >
+            {editing && (
+              <span
+                onPointerDown={(e) => startDrag(e, s.id)}
+                style={{ touchAction: "none" }}
+                className="cursor-grab px-1 text-text/30 select-none hover:text-text/60 active:cursor-grabbing"
+                title="Drag to reorder"
+              >
+                ⠿
+              </span>
+            )}
+            <span className="w-5 text-xs text-text/30 tabular-nums">{i + 1}.</span>
+            <span className="flex-1 truncate">{s.name}</span>
+            {s.minSeconds !== null && (
+              <span className="text-xs text-text/40">≥{fmtDuration(s.minSeconds)}</span>
+            )}
+            {s.maxSeconds !== null && (
+              <span className="text-xs text-text/40">≤{fmtDuration(s.maxSeconds)}</span>
+            )}
+            {editing && (
+              <span className="flex items-center gap-1">
+                <button
+                  onClick={() => setEditingStepId(s.id)}
+                  className="rounded border border-border px-1.5 py-0.5 text-xs text-text/40 transition hover:border-border-strong hover:text-text/70"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onRemove(s.id)}
+                  disabled={removePending}
+                  className="rounded border border-negative-border px-1.5 py-0.5 text-xs text-accent transition hover:bg-negative-soft disabled:opacity-30"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared step form — used to add a new step and to edit an existing one
+// ---------------------------------------------------------------------------
+
+function StepForm({
   habits,
   pending,
-  onAdd,
+  submitLabel,
+  placeholder,
+  initial,
+  resetOnSubmit = false,
+  onSubmit,
+  onCancel,
 }: {
-  routineId: string;
   habits: { id: string; name: string }[];
   pending: boolean;
-  onAdd: (values: {
-    routineId: string;
+  submitLabel: string;
+  placeholder: string;
+  initial?: Step;
+  resetOnSubmit?: boolean;
+  onSubmit: (values: {
     name: string;
-    habitId?: string | null;
-    minSeconds?: number | null;
-    maxSeconds?: number | null;
+    habitId: string | null;
+    minSeconds: number | null;
+    maxSeconds: number | null;
   }) => void;
+  onCancel?: () => void;
 }) {
-  const [name, setName] = useState("");
-  const [minMinutes, setMinMinutes] = useState("");
-  const [maxMinutes, setMaxMinutes] = useState("");
-  const [habitId, setHabitId] = useState("");
+  const [name, setName] = useState(initial?.name ?? "");
+  const [minMinutes, setMinMinutes] = useState(
+    initial?.minSeconds != null ? String(initial.minSeconds / 60) : "",
+  );
+  const [maxMinutes, setMaxMinutes] = useState(
+    initial?.maxSeconds != null ? String(initial.maxSeconds / 60) : "",
+  );
+  const [habitId, setHabitId] = useState(initial?.habitId ?? "");
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         if (!name.trim()) return;
-        onAdd({
-          routineId,
+        onSubmit({
           name: name.trim(),
           habitId: habitId || null,
           minSeconds: minMinutes ? Math.round(Number(minMinutes) * 60) : null,
           maxSeconds: maxMinutes ? Math.round(Number(maxMinutes) * 60) : null,
         });
-        setName("");
-        setMinMinutes("");
-        setMaxMinutes("");
-        setHabitId("");
+        if (resetOnSubmit) {
+          setName("");
+          setMinMinutes("");
+          setMaxMinutes("");
+          setHabitId("");
+        }
       }}
       className="flex flex-wrap items-center gap-2"
     >
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Add a step — e.g. Brush teeth"
+        placeholder={placeholder}
         className="min-w-40 flex-1 rounded-lg border-[1.5px] border-border bg-surface px-3 py-1.5 text-xs text-text placeholder:text-text/30 focus:border-border-strong focus:outline-none"
       />
       <input
@@ -406,8 +563,17 @@ function AddStepForm({
         disabled={pending || !name.trim()}
         className="rounded-lg border-[1.5px] border-border-strong px-3 py-1.5 text-xs font-semibold text-text/70 transition hover:bg-text/5 disabled:opacity-40"
       >
-        Add step
+        {submitLabel}
       </button>
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border-[1.5px] border-border px-3 py-1.5 text-xs text-text/40 transition hover:text-text/70"
+        >
+          Cancel
+        </button>
+      )}
     </form>
   );
 }
