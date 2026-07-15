@@ -35,10 +35,11 @@ async function getOrderedSteps(db: UserDb, routineId: string) {
 // Close the run's currently-active step. For completed steps this also writes
 // the timeline event and, when the step is linked to a habit, logs a sighting
 // (max one per habit per ~day) so routine completions feed streaks.
+// "deferred" closes the attempt but leaves the step in the remaining pool.
 async function closeActiveStep(
   db: UserDb,
   runId: string,
-  status: "completed" | "skipped" | "incomplete",
+  status: "completed" | "skipped" | "incomplete" | "deferred",
 ) {
   const [current] = await db
     .select()
@@ -112,10 +113,22 @@ async function closeActiveStep(
   return current;
 }
 
-// Open the next step after `previousStepId`, or close the run as completed if
-// the chain is exhausted. Steps are matched by position so mid-run edits to
-// the routine degrade gracefully.
-async function advanceRun(db: UserDb, runId: string, previousStepId: string) {
+// A step is still "remaining" in a run if none of its attempts reached a
+// terminal state — deferred attempts (and steps never started) stay available.
+function remainingRunSteps(
+  steps: (typeof routineSteps.$inferSelect)[],
+  runStepRows: (typeof stepRuns.$inferSelect)[],
+) {
+  const settled = new Set(
+    runStepRows.filter((r) => r.status !== "deferred").map((r) => r.stepId),
+  );
+  return steps.filter((s) => !settled.has(s.id));
+}
+
+// After a step closes, either finish the run (nothing left to do) or leave it
+// in the "choosing" state — active run with no active step — so the user picks
+// what comes next.
+async function maybeFinishRun(db: UserDb, runId: string) {
   const [run] = await db
     .select()
     .from(routineRuns)
@@ -124,10 +137,12 @@ async function advanceRun(db: UserDb, runId: string, previousStepId: string) {
   if (!run) return { done: true };
 
   const steps = await getOrderedSteps(db, run.routineId);
-  const prevIndex = steps.findIndex((s) => s.id === previousStepId);
-  const next = prevIndex >= 0 ? steps[prevIndex + 1] : undefined;
+  const runStepRows = await db
+    .select()
+    .from(stepRuns)
+    .where(eq(stepRuns.runId, runId));
 
-  if (!next) {
+  if (remainingRunSteps(steps, runStepRows).length === 0) {
     await db
       .update(routineRuns)
       .set({ status: "completed", endedAt: now() })
@@ -135,15 +150,7 @@ async function advanceRun(db: UserDb, runId: string, previousStepId: string) {
     return { done: true };
   }
 
-  await db.insert(stepRuns).values({
-    id: uuid(),
-    runId,
-    stepId: next.id,
-    name: next.name,
-    startedAt: now(),
-    status: "active",
-  });
-  return { done: false };
+  return { done: false, choosing: true };
 }
 
 // Full state of the single active run (if any) — the run screen is rendered
@@ -181,6 +188,8 @@ async function activeRunState(db: UserDb) {
     runSteps,
     currentStepRun,
     currentStep,
+    // No active step + remaining steps = the "what's next?" chooser state
+    remainingSteps: remainingRunSteps(steps, runSteps),
     serverNow: now(),
   };
 }
@@ -406,7 +415,7 @@ export const routinesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const closed = await closeActiveStep(ctx.db, input.runId, "completed");
       if (!closed) return { done: true };
-      return advanceRun(ctx.db, input.runId, closed.stepId);
+      return maybeFinishRun(ctx.db, input.runId);
     }),
 
   skipStep: publicProcedure
@@ -414,7 +423,78 @@ export const routinesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const closed = await closeActiveStep(ctx.db, input.runId, "skipped");
       if (!closed) return { done: true };
-      return advanceRun(ctx.db, input.runId, closed.stepId);
+      return maybeFinishRun(ctx.db, input.runId);
+    }),
+
+  // Put the current step back in the pool and drop into the chooser. The
+  // deferred attempt keeps its timestamps but stays selectable.
+  deferStep: publicProcedure
+    .input(z.object({ runId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await closeActiveStep(ctx.db, input.runId, "deferred");
+      return { done: false, choosing: true };
+    }),
+
+  // Start a specific remaining step from the chooser
+  chooseStep: publicProcedure
+    .input(z.object({ runId: z.string(), stepId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const state = await activeRunState(ctx.db);
+      if (!state || state.run.id !== input.runId) {
+        throw new Error("Run is no longer active");
+      }
+      if (state.currentStepRun) {
+        throw new Error("A step is already in progress");
+      }
+      const step = state.remainingSteps.find((s) => s.id === input.stepId);
+      if (!step) throw new Error("That step isn't available to start");
+
+      await ctx.db.insert(stepRuns).values({
+        id: uuid(),
+        runId: input.runId,
+        stepId: step.id,
+        name: step.name,
+        startedAt: now(),
+        status: "active",
+      });
+      return { ok: true };
+    }),
+
+  // Start an ad-hoc step that isn't part of the routine. The synthetic stepId
+  // matches no routine_steps row, so it renders from its name snapshot and
+  // skips habit logging — same as a step deleted after the fact.
+  chooseCustomStep: publicProcedure
+    .input(z.object({ runId: z.string(), name: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const state = await activeRunState(ctx.db);
+      if (!state || state.run.id !== input.runId) {
+        throw new Error("Run is no longer active");
+      }
+      if (state.currentStepRun) {
+        throw new Error("A step is already in progress");
+      }
+
+      await ctx.db.insert(stepRuns).values({
+        id: uuid(),
+        runId: input.runId,
+        stepId: uuid(),
+        name: input.name.trim(),
+        startedAt: now(),
+        status: "active",
+      });
+      return { ok: true };
+    }),
+
+  // End the run early from the chooser; remaining steps are simply left unrun
+  finishRun: publicProcedure
+    .input(z.object({ runId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await closeActiveStep(ctx.db, input.runId, "completed");
+      await ctx.db
+        .update(routineRuns)
+        .set({ status: "completed", endedAt: now() })
+        .where(eq(routineRuns.id, input.runId));
+      return { done: true };
     }),
 
   abandonRun: publicProcedure
