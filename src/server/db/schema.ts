@@ -129,7 +129,7 @@ export const stepRuns = createTable("step_runs", (d) => ({
   name: d.text().notNull(), // snapshot — the step may be renamed/deleted later
   startedAt: d.integer().notNull(),
   endedAt: d.integer(),
-  status: d.text().notNull(), // active | completed | skipped | incomplete
+  status: d.text().notNull(), // active | completed | skipped | incomplete | deferred
 }));
 
 // Calendar-shaped day timeline — stable ids so phase 2 can mirror rows to
