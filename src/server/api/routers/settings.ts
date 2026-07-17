@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -42,16 +43,33 @@ export const settingsRouter = createTRPCRouter({
       const now = Math.floor(Date.now() / 1000);
 
       const [existing] = await ctx.db
-        .select({ id: settings.id })
+        .select({
+          id: settings.id,
+          provider: settings.provider,
+          apiKey: settings.apiKey,
+        })
         .from(settings)
         .where(eq(settings.id, "default"))
         .limit(1);
+
+      // Blank key + same provider means "keep my saved key" — don't wipe it.
+      const apiKey =
+        input.apiKey ??
+        (existing?.provider === input.provider ? existing.apiKey : null);
+
+      // BYO providers only run on the user's own key — refuse to save without one.
+      if (input.tier === "byo" && !apiKey) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "An API key is required for this provider — bring your own.",
+        });
+      }
 
       const row = {
         id: "default" as const,
         provider: input.provider,
         model: input.model,
-        apiKey: input.apiKey ?? null,
+        apiKey,
         baseUrl: input.baseUrl ?? null,
         mode: input.mode ?? "auto",
         tier: input.tier ?? null,
@@ -84,6 +102,13 @@ export const settingsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
+      if (input.tier === "byo" && !input.apiKey) {
+        return {
+          ok: false as const,
+          error: "An API key is required for this provider — bring your own.",
+        };
+      }
+
       const config: AiConfig = {
         provider: input.provider,
         model: input.model,
