@@ -7,6 +7,7 @@ import { resolveAi } from "~/server/ai/provider";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import type { UserDb } from "~/server/db";
 import { entries, habitOccurrences, habits, nudges, timelineEvents } from "~/server/db/schema";
+import { computeStreaks } from "~/server/streaks";
 
 // ---------------------------------------------------------------------------
 // Shared habit upsert helper — also logs a sighting for streak tracking
@@ -54,6 +55,14 @@ async function upsertHabit(
     entryId,
     seenAt: seenAt ?? Math.floor(Date.now() / 1000),
   });
+
+  const sightings = await db
+    .select({ seenAt: habitOccurrences.seenAt })
+    .from(habitOccurrences)
+    .where(eq(habitOccurrences.habitId, habitId));
+  const { current } = computeStreaks(sightings.map((s) => s.seenAt));
+
+  return { habitId, currentStreak: current };
 }
 
 export const journalRouter = createTRPCRouter({
@@ -89,7 +98,16 @@ export const journalRouter = createTRPCRouter({
         });
       }
 
-      return { id };
+      // Global check-in streak — consecutive calendar days with a check-in,
+      // independent of AI analysis, so it's available the instant the entry saves
+      const recentEntries = await ctx.db
+        .select({ createdAt: entries.createdAt })
+        .from(entries)
+        .orderBy(desc(entries.createdAt))
+        .limit(200);
+      const checkinStreak = computeStreaks(recentEntries.map((e) => e.createdAt));
+
+      return { id, checkinStreak };
     }),
 
   // ---------------------------------------------------------------------------
@@ -144,8 +162,15 @@ export const journalRouter = createTRPCRouter({
         mode,
       );
 
+      const habitsWithStreaks = [];
       for (const habit of extraction.habits) {
-        await upsertHabit(ctx.db, habit, input.entryId, entry.createdAt);
+        const { currentStreak } = await upsertHabit(
+          ctx.db,
+          habit,
+          input.entryId,
+          entry.createdAt,
+        );
+        habitsWithStreaks.push({ ...habit, currentStreak });
       }
 
       const nudgeRows = extraction.plans.map((action) => ({
@@ -157,7 +182,7 @@ export const journalRouter = createTRPCRouter({
       await ctx.db.insert(nudges).values(nudgeRows);
 
       return {
-        habits: extraction.habits,
+        habits: habitsWithStreaks,
         plans: nudgeRows.map((r) => ({ id: r.id, action: r.action, selected: false })),
       };
     }),

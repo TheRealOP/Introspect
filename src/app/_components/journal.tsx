@@ -16,9 +16,15 @@ const sentimentChip: Record<string, string> = {
 };
 
 type AnalysisResult = {
-  habits: { name: string; sentiment: "positive" | "negative" | "neutral" }[];
+  habits: {
+    name: string;
+    sentiment: "positive" | "negative" | "neutral";
+    currentStreak: number;
+  }[];
   plans: { id: string; action: string; selected: boolean }[];
 };
+
+type CheckinStreak = { current: number; longest: number };
 
 export function JournalEditor() {
   const [content, setContent] = useState("");
@@ -27,6 +33,7 @@ export function JournalEditor() {
   const [committedPlan, setCommittedPlan] = useState<string | null>(null);
   const [customPlan, setCustomPlan] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [checkinStreak, setCheckinStreak] = useState<CheckinStreak | null>(null);
 
   const utils = api.useUtils();
   const { data: entries } = api.journal.list.useQuery();
@@ -95,6 +102,7 @@ export function JournalEditor() {
   const create = api.journal.create.useMutation({
     onSuccess: async (data) => {
       setActiveEntryId(data.id);
+      setCheckinStreak(data.checkinStreak);
       await utils.journal.list.invalidate();
       setContent("");
       analyze.mutate({ entryId: data.id });
@@ -106,6 +114,7 @@ export function JournalEditor() {
     setAnalysisResult(null);
     setActiveEntryId(null);
     setCommittedPlan(null);
+    setCheckinStreak(null);
     create.mutate({ content: content.trim() });
   };
 
@@ -158,6 +167,20 @@ export function JournalEditor() {
           </div>
         </div>
       </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Check-in streak reward — renders instantly, before AI analysis      */}
+      {/* ------------------------------------------------------------------ */}
+      {checkinStreak && (
+        <div className="flex items-center gap-2 rounded-xl border-[1.5px] border-border-strong bg-accent-soft p-4">
+          <span className="text-lg">{checkinStreak.current >= 2 ? "🔥" : "✦"}</span>
+          <p className="text-sm font-medium text-accent-text">
+            {checkinStreak.current >= 2
+              ? `${checkinStreak.current}-day check-in streak`
+              : "First check-in logged — come back tomorrow to keep it going"}
+          </p>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Analyzing state                                                      */}
@@ -287,6 +310,11 @@ export function JournalEditor() {
                     />
                     {h.name}
                     <span className="text-text/30">· {h.sentiment}</span>
+                    {h.currentStreak >= 2 && (
+                      <span className="font-semibold text-accent-text">
+                        🔥 {h.currentStreak}d
+                      </span>
+                    )}
                   </span>
                 ))}
               </div>
