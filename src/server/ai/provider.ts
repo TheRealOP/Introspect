@@ -19,6 +19,7 @@ const DEFAULT_PROVIDER = "ollama";
 const DEFAULT_MODEL = "llama3.1:8b";
 const DEFAULT_MODE: StructuredMode = "auto";
 const OLLAMA_BASE_URL = "http://localhost:11434/v1";
+const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -73,6 +74,7 @@ export async function getAiConfig(db: UserDb): Promise<AiConfig> {
     anthropic: env.ANTHROPIC_API_KEY,
     google: env.GOOGLE_GENERATIVE_AI_API_KEY,
     custom: env.OPENAI_API_KEY,
+    openrouter: env.OPENAI_API_KEY,
     ollama: undefined, // no key needed
     hosted: undefined,
   };
@@ -109,6 +111,8 @@ export function buildModelFromConfig(config: AiConfig): LanguageModel {
       return createGoogleGenerativeAI({ apiKey })(model);
     case "groq":
       return createGroq({ apiKey })(model);
+    case "openrouter":
+      return createOpenAI({ apiKey, baseURL: baseUrl ?? OPENROUTER_BASE_URL })(model);
     case "ollama":
       // Ollama speaks the OpenAI API — no real key required
       return createOpenAI({
