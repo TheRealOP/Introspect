@@ -34,6 +34,18 @@ export const habitOccurrences = createTable("habit_occurrences", (d) => ({
   seenAt: d.integer().default(sql`(unixepoch())`),
 }));
 
+// AI-extracted (or manual) todos captured from check-ins
+export const todos = createTable("todos", (d) => ({
+  id: d.text().primaryKey(),
+  title: d.text().notNull(),
+  status: d.text().notNull().default("open"), // open | done | dismissed
+  source: d.text().notNull().default("extracted"), // extracted | manual
+  entryId: d.text(), // check-in that created it (null for manual)
+  completedByEntryId: d.text(), // check-in whose analysis auto-completed it
+  createdAt: d.integer().default(sql`(unixepoch())`),
+  completedAt: d.integer(),
+}));
+
 // Singleton (id = "default") — user's AI provider config; DB row wins over env
 export const settings = createTable("settings", (d) => ({
   id: d.text().primaryKey(),

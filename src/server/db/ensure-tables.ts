@@ -92,6 +92,16 @@ const CREATE_TABLE_STATEMENTS = [
     \`sourceId\` TEXT,
     \`createdAt\` INTEGER DEFAULT (unixepoch())
   )`,
+  `CREATE TABLE IF NOT EXISTS \`introspect_todos\` (
+    \`id\` TEXT PRIMARY KEY NOT NULL,
+    \`title\` TEXT NOT NULL,
+    \`status\` TEXT NOT NULL DEFAULT 'open',
+    \`source\` TEXT NOT NULL DEFAULT 'extracted',
+    \`entryId\` TEXT,
+    \`completedByEntryId\` TEXT,
+    \`createdAt\` INTEGER DEFAULT (unixepoch()),
+    \`completedAt\` INTEGER
+  )`,
 ];
 
 // Columns added to existing tables after initial launch. Each is attempted

@@ -3,10 +3,11 @@ import { v4 as uuid } from "uuid";
 import { z } from "zod";
 
 import { extractFromEntry } from "~/server/ai/extract";
+import type { AiExtraction } from "~/server/ai/extract";
 import { resolveAi } from "~/server/ai/provider";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import type { UserDb } from "~/server/db";
-import { entries, habitOccurrences, habits, nudges, timelineEvents } from "~/server/db/schema";
+import { entries, habitOccurrences, habits, nudges, timelineEvents, todos } from "~/server/db/schema";
 import { computeStreaks } from "~/server/streaks";
 
 // ---------------------------------------------------------------------------
@@ -63,6 +64,72 @@ async function upsertHabit(
   const { current } = computeStreaks(sightings.map((s) => s.seenAt));
 
   return { habitId, currentStreak: current };
+}
+
+// ---------------------------------------------------------------------------
+// Shared todo-lifecycle helper — applies an extraction's completions + new
+// todos against the open-todo list. Runs in both analyze and analyzeAll.
+// ---------------------------------------------------------------------------
+type OpenTodo = { id: string; title: string };
+
+async function applyTodoExtraction(
+  db: UserDb,
+  extraction: AiExtraction,
+  openTodos: OpenTodo[],
+  entryId: string,
+) {
+  const completedTodos: OpenTodo[] = [];
+
+  // Completions first — indexes are 1-based into openTodos. Small models
+  // hallucinate, so bounds-check and silently skip anything invalid, and
+  // dedupe repeated indexes.
+  const seenIndexes = new Set<number>();
+  for (const n of extraction.completedTodoIndexes) {
+    if (!Number.isInteger(n) || n < 1 || n > openTodos.length) continue;
+    if (seenIndexes.has(n)) continue;
+    seenIndexes.add(n);
+
+    const todo = openTodos[n - 1]!;
+    await db
+      .update(todos)
+      .set({
+        status: "done",
+        completedAt: Math.floor(Date.now() / 1000),
+        completedByEntryId: entryId,
+      })
+      .where(eq(todos.id, todo.id));
+    completedTodos.push(todo);
+  }
+
+  // New todos — trim, drop empties, and dedupe (belt-and-braces on top of the
+  // in-prompt dedup) against still-open todos and within the batch itself.
+  const completedIds = new Set(completedTodos.map((t) => t.id));
+  const stillOpenTitles = new Set(
+    openTodos
+      .filter((t) => !completedIds.has(t.id))
+      .map((t) => t.title.trim().toLowerCase()),
+  );
+  const insertedTitles = new Set<string>();
+  const newTodos: OpenTodo[] = [];
+  for (const raw of extraction.newTodos) {
+    const title = raw.trim();
+    if (!title) continue;
+    const key = title.toLowerCase();
+    if (stillOpenTitles.has(key) || insertedTitles.has(key)) continue;
+    insertedTitles.add(key);
+
+    const id = uuid();
+    await db.insert(todos).values({
+      id,
+      title,
+      status: "open",
+      source: "extracted",
+      entryId,
+    });
+    newTodos.push({ id, title });
+  }
+
+  return { newTodos, completedTodos };
 }
 
 export const journalRouter = createTRPCRouter({
@@ -154,12 +221,26 @@ export const journalRouter = createTRPCRouter({
 
       const { model, mode } = await resolveAi(ctx.db);
 
+      const openTodos = await ctx.db
+        .select({ id: todos.id, title: todos.title })
+        .from(todos)
+        .where(eq(todos.status, "open"))
+        .orderBy(asc(todos.createdAt));
+
       const extraction = await extractFromEntry(
         model,
         entry.content,
         [...previous].reverse(),
         pastSelections.map((s) => s.action),
         mode,
+        openTodos,
+      );
+
+      const { newTodos, completedTodos } = await applyTodoExtraction(
+        ctx.db,
+        extraction,
+        openTodos,
+        input.entryId,
       );
 
       const habitsWithStreaks = [];
@@ -184,6 +265,8 @@ export const journalRouter = createTRPCRouter({
       return {
         habits: habitsWithStreaks,
         plans: nudgeRows.map((r) => ({ id: r.id, action: r.action, selected: false })),
+        newTodos,
+        completedTodos,
       };
     }),
 
@@ -230,13 +313,24 @@ export const journalRouter = createTRPCRouter({
         )
         .slice(-5);
 
+      // Re-fetch open todos fresh for each entry — this loop runs oldest-first,
+      // so an earlier entry's inserts/completions must be visible to the next.
+      const openTodos = await ctx.db
+        .select({ id: todos.id, title: todos.title })
+        .from(todos)
+        .where(eq(todos.status, "open"))
+        .orderBy(asc(todos.createdAt));
+
       const extraction = await extractFromEntry(
         model,
         entry.content,
         previous,
         pastSelections.map((s) => s.action),
         mode,
+        openTodos,
       );
+
+      await applyTodoExtraction(ctx.db, extraction, openTodos, entry.id);
 
       for (const habit of extraction.habits) {
         await upsertHabit(ctx.db, habit, entry.id, entry.createdAt);
