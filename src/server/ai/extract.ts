@@ -34,6 +34,19 @@ export const aiExtractionSchema = z.object({
     .describe(
       "Exactly 3 distinct mini-plans for what the user should focus on until their next check-in. Each should be a concrete, 1-2 sentence intention grounded in what the user just reported.",
     ),
+
+  newTodos: z
+    .array(z.string())
+    .describe(
+      "Concrete, actionable tasks the user explicitly says they need or intend to do (errands, work items, obligations). Short imperative phrasing, max ~10 words each. NOT habits, NOT the mini-plans, NOT vague aspirations. Empty array if none.",
+    ),
+
+  // NOTE: these indexes are 1-based, matching the numbered "Open todos" list in the prompt.
+  completedTodoIndexes: z
+    .array(z.number().int())
+    .describe(
+      "Numbers (1-based) from the provided \"Open todos\" numbered list that this check-in indicates are now finished. Empty array if none or if no list provided.",
+    ),
 });
 
 export type AiExtraction = z.infer<typeof aiExtractionSchema>;
@@ -43,6 +56,7 @@ export type AiExtraction = z.infer<typeof aiExtractionSchema>;
 // ---------------------------------------------------------------------------
 
 type PreviousEntry = { content: string; createdAt: number | null };
+type OpenTodo = { id: string; title: string };
 
 export async function extractFromEntry(
   model: LanguageModel,
@@ -50,6 +64,7 @@ export async function extractFromEntry(
   previous: PreviousEntry[],
   selectedPlans: string[] = [],
   mode: StructuredMode = "auto",
+  openTodos: OpenTodo[] = [],
 ): Promise<AiExtraction> {
   const previousBlock =
     previous.length > 0
@@ -69,7 +84,7 @@ export async function extractFromEntry(
     schema: aiExtractionSchema,
     toolName: "extract",
     toolDescription:
-      "Extract habits and mini-plans from the user's check-in entries.",
+      "Extract habits, mini-plans, and todos from the user's check-in entries.",
     temperature: 0.2,
     system: `You are a behavioral coach helping users set clear intentions for their next working session.
 Analyze the user's check-in to spot habits and patterns.
@@ -81,11 +96,15 @@ Rules for every mini-plan:
 - Describe a realistic focus for the next 1-3 hours
 - Address different angles across the 3 plans (e.g. the main task, a side obligation, a recovery/rest need)
 Do NOT suggest: calling someone, journaling (they're already here), vague self-care platitudes, or anything requiring hours of setup.
-Write each plan as a direct, confident statement. No preamble, no explanation.`,
+Write each plan as a direct, confident statement. No preamble, no explanation.
+Also extract todos from the check-in:
+- Extract only self-contained actionable tasks the user explicitly mentions needing to do (errands, work items, obligations) — not habits, not the mini-plans, not vague aspirations.
+- Do NOT re-extract a task that is substantially the same as an existing open todo (that's what the numbered "Open todos" list is for).
+- If the check-in says an open todo was done/finished, return its number in completedTodoIndexes.`,
     prompt: `--- Previous check-ins (oldest first) ---
 ${previousBlock}
 
-${selectedPlans.length > 0 ? `--- Plans this user has previously committed to (reveals their priorities) ---\n${selectedPlans.map((p, i) => `${i + 1}. ${p}`).join("\n")}\n\n` : ""}--- Latest check-in ---
+${selectedPlans.length > 0 ? `--- Plans this user has previously committed to (reveals their priorities) ---\n${selectedPlans.map((p, i) => `${i + 1}. ${p}`).join("\n")}\n\n` : ""}${openTodos.length > 0 ? `--- Open todos (numbered) ---\n${openTodos.map((t, i) => `${i + 1}. ${t.title}`).join("\n")}\n\n` : ""}--- Latest check-in ---
 ${latest}`,
   });
 }

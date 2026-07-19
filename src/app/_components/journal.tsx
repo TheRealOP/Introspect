@@ -22,6 +22,8 @@ type AnalysisResult = {
     currentStreak: number;
   }[];
   plans: { id: string; action: string; selected: boolean }[];
+  newTodos: { id: string; title: string }[];
+  completedTodos: { id: string; title: string }[];
 };
 
 type CheckinStreak = { current: number; longest: number };
@@ -96,6 +98,7 @@ export function JournalEditor() {
       setShowCustomInput(false);
       setCustomPlan("");
       await utils.habits.list.invalidate();
+      await utils.todos.list.invalidate();
     },
   });
 
@@ -317,6 +320,41 @@ export function JournalEditor() {
                     )}
                   </span>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {(analysisResult.newTodos.length > 0 ||
+            analysisResult.completedTodos.length > 0) && (
+            <div className="rounded-xl border-[1.5px] border-border bg-surface p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-text/40">
+                Todos
+              </p>
+              <div className="flex flex-col gap-3">
+                {analysisResult.newTodos.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-medium text-text/40">＋ Captured</p>
+                    <ul className="flex flex-col gap-1">
+                      {analysisResult.newTodos.map((t) => (
+                        <li key={t.id} className="text-sm text-text/80">
+                          {t.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {analysisResult.completedTodos.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-medium text-accent-text">✓ Completed</p>
+                    <ul className="flex flex-col gap-1">
+                      {analysisResult.completedTodos.map((t) => (
+                        <li key={t.id} className="text-sm text-text/60 line-through">
+                          {t.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           )}
