@@ -23,7 +23,8 @@ export async function POST(req: Request) {
     }
 
     const body = (await req.json()) as { email?: string };
-    const { email } = body;
+    // Emails are stored trimmed + lowercased at signup; match that here.
+    const email = body.email?.trim().toLowerCase();
 
     if (!email) {
       return NextResponse.json({ ok: true }); // don't leak anything

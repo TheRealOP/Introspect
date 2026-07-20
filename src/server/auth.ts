@@ -14,7 +14,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const user = await getUserByEmail(credentials.email as string);
+        // Signup stores emails trimmed + lowercased; normalize the same way
+        // here or mixed-case logins would never match their stored row.
+        const email = (credentials.email as string).trim().toLowerCase();
+        const user = await getUserByEmail(email);
         if (!user) return null;
         const valid = await bcrypt.compare(
           credentials.password as string,
