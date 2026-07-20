@@ -6,9 +6,22 @@ import {
   initUsersDb,
 } from "~/server/db/users-client";
 import { sendVerificationEmail } from "~/server/email";
+import { checkRateLimit } from "~/server/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    // Tighter limit than signup — this endpoint has no password/DB
+    // provisioning cost gate, so it's cheaper to abuse for email spam.
+    const rateLimit = await checkRateLimit(req, "resend", {
+      perIp: [{ windowSeconds: 60 * 60, max: 3 }], // 3/hour
+    });
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { error: "Too many attempts, please try again later" },
+        { status: 429 },
+      );
+    }
+
     const body = (await req.json()) as { email?: string };
     const { email } = body;
 

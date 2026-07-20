@@ -11,7 +11,10 @@ import {
   initUsersDb,
 } from "~/server/db/users-client";
 import { sendVerificationEmail } from "~/server/email";
+import { checkRateLimit } from "~/server/rate-limit";
 import { provisionUserDb } from "~/server/turso";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // SQL to initialise all tables in a brand-new user database
 const USER_DB_INIT_SQL = `
@@ -151,11 +154,31 @@ const USER_DB_INIT_SQL = `
 
 export async function POST(req: Request) {
   try {
+    // Rate limit before any DB provisioning or email send — cheap check
+    // that protects Turso/Resend quotas from unauthenticated abuse.
+    const rateLimit = await checkRateLimit(req, "signup", {
+      perIp: [
+        { windowSeconds: 60 * 60, max: 5 }, // 5/hour
+        { windowSeconds: 60 * 60 * 24, max: 20 }, // 20/day
+      ],
+      global: { windowSeconds: 60 * 60 * 24, max: 100 }, // 100/day across all IPs
+    });
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { error: "Too many attempts, please try again later" },
+        { status: 429 },
+      );
+    }
+
     const body = (await req.json()) as { email?: string; password?: string };
-    const { email, password } = body;
+    const { password } = body;
+    const email = body.email?.trim().toLowerCase();
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 });
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
     if (password.length < 8) {
       return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
