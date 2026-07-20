@@ -8,6 +8,11 @@ interface TursoDbResult {
 export async function provisionUserDb(userId: string): Promise<TursoDbResult> {
   // Dev fallback: if no Turso Platform API token, use a local SQLite file
   if (!env.TURSO_API_TOKEN || !env.TURSO_ORGANIZATION) {
+    if (env.NODE_ENV === "production") {
+      throw new Error(
+        "TURSO_API_TOKEN and TURSO_ORGANIZATION must be set in production — refusing file: SQLite fallback"
+      );
+    }
     return {
       dbUrl: `file:./user-${userId}.sqlite`,
       dbAuthToken: "",
