@@ -56,6 +56,18 @@ export async function initUsersDb() {
       expiresAt INTEGER NOT NULL
     )
   `);
+
+  // Create rate limit counters table — fixed-window request counts per
+  // hashed IP (or "global") and scope, keyed so upserts are cheap.
+  await getClient().execute(`
+    CREATE TABLE IF NOT EXISTS signup_attempts (
+      ipHash TEXT NOT NULL,
+      scope TEXT NOT NULL,
+      windowStart INTEGER NOT NULL,
+      count INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (ipHash, scope, windowStart)
+    )
+  `);
 }
 
 export async function getUserByEmail(email: string) {
@@ -164,6 +176,28 @@ export async function createFeedback(data: {
       data.userAgent ?? null,
     ],
   });
+}
+
+// Increments the counter for (ipHash, scope, windowStart) and returns the
+// new count. Used by the rate limiter for fixed-window request counting.
+export async function incrementRateLimitCounter(
+  ipHash: string,
+  scope: string,
+  windowStart: number,
+): Promise<number> {
+  await initUsersDb();
+  const result = await getClient().execute({
+    sql: `
+      INSERT INTO signup_attempts (ipHash, scope, windowStart, count)
+      VALUES (?1, ?2, ?3, 1)
+      ON CONFLICT (ipHash, scope, windowStart)
+      DO UPDATE SET count = count + 1
+      RETURNING count
+    `,
+    args: [ipHash, scope, windowStart],
+  });
+  const row = result.rows[0];
+  return row ? (row.count as number) : 1;
 }
 
 export async function listUsers(): Promise<
