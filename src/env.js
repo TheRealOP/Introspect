@@ -17,8 +17,14 @@ export const env = createEnv({
     USERS_DATABASE_URL: z.string().min(1),
     USERS_DATABASE_AUTH_TOKEN: z.string().optional(),
     // Turso Platform API — for provisioning per-user databases
-    TURSO_API_TOKEN: z.string().optional(),
-    TURSO_ORGANIZATION: z.string().optional(),
+    TURSO_API_TOKEN:
+      process.env.NODE_ENV === "production"
+        ? z.string().min(1, "TURSO_API_TOKEN is required in production")
+        : z.string().optional(),
+    TURSO_ORGANIZATION:
+      process.env.NODE_ENV === "production"
+        ? z.string().min(1, "TURSO_ORGANIZATION is required in production")
+        : z.string().optional(),
     // AI providers
     GROQ_API_KEY: z.string().min(1).optional(),
     OPENAI_API_KEY: z.string().min(1).optional(),
